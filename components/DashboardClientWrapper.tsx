@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils"
 import { checkConnection, attemptReconnect, type ConnectionState } from "@/lib/data-manager"
 import { Card, CardHeader, CardTitle, CardDescription, CardFooter, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { User, Heart, Plane, PlusCircle, Users, Calendar, MapPin, Sparkles, Star, RefreshCw, WifiOff, AlertCircle, Camera } from "lucide-react"
+import { User, Heart, Plane, PlusCircle, Users, Calendar, MapPin, Sparkles, Star, RefreshCw, WifiOff, AlertCircle, Camera, Trash } from "lucide-react"
 
 // Types
 // (You may want to move the Trip type here if not already imported)
@@ -727,6 +727,32 @@ export default function DashboardClientWrapper() {
     }
   }, [searchParams, user, isLoading])
 
+  const handleDeleteTrip = async (tripId: string) => {
+    if (!window.confirm("Are you sure you want to delete this trip? This cannot be undone.")) return;
+    try {
+      // Optimistically update UI
+      setTrips((prev) => prev.filter((trip) => trip.id !== tripId))
+      // Delete trip from Supabase (will fail if not creator due to RLS)
+      const { error } = await supabase.from("trips").delete().eq("id", tripId)
+      if (error) {
+        throw error
+      }
+      toast({
+        title: "Trip Deleted",
+        description: "Your trip was deleted successfully.",
+      })
+    } catch (error) {
+      console.error("Error deleting trip:", error)
+      toast({
+        title: "Error",
+        description: "Failed to delete trip. Please try again.",
+        variant: "destructive",
+      })
+      // Optionally, refetch trips to restore UI if needed
+      fetchTrips(true)
+    }
+  }
+
   if (isLoading || isLoadingProfile || (!user && !isLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-vault-purple/10 via-vault-pink/10 to-vault-yellow/10">
@@ -1025,60 +1051,76 @@ export default function DashboardClientWrapper() {
               const isOngoing = new Date(trip.start_date) <= new Date() && new Date(trip.end_date) >= new Date()
 
               return (
-                <Link href={`/trips/${trip.id}`} key={trip.id}>
-                  <Card
-                    className="h-full border-0 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-105 hover:-rotate-1 animate-fade-in overflow-hidden group"
-                    style={{ animationDelay: `${index * 0.1}s` }}
-                  >
-                    <div
-                      className="h-32 relative overflow-hidden"
-                      style={{
-                        background: `linear-gradient(to bottom right, ${getTripGradient(trip.name, trip.destination, index)})`,
-                      }}
+                <div key={trip.id} className="relative group">
+                  <Link href={`/trips/${trip.id}`}>
+                    <Card
+                      className="h-full border-0 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-105 hover:-rotate-1 animate-fade-in overflow-hidden group"
+                      style={{ animationDelay: `${index * 0.1}s` }}
                     >
-                      <MapPin className="absolute top-4 right-4 h-8 w-8 text-white/30" />
-                      <Plane className="absolute bottom-4 left-4 h-6 w-6 text-white/30 transform rotate-45" />
-                      <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors" />
-                      <div className="absolute bottom-4 left-4 text-white">
-                        <h3 className="text-2xl font-bold drop-shadow-lg">{trip.name}</h3>
-                        <p className="text-white/90 flex items-center gap-1">
-                          <MapPin className="h-4 w-4" />
-                          {trip.destination}
-                        </p>
+                      <div
+                        className="h-32 relative overflow-hidden"
+                        style={{
+                          background: `linear-gradient(to bottom right, ${getTripGradient(trip.name, trip.destination, index)})`,
+                        }}
+                      >
+                        <MapPin className="absolute top-4 right-4 h-8 w-8 text-white/30" />
+                        <Plane className="absolute bottom-4 left-4 h-6 w-6 text-white/30 transform rotate-45" />
+                        <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors" />
+                        <div className="absolute bottom-4 left-4 text-white">
+                          <h3 className="text-2xl font-bold drop-shadow-lg">{trip.name}</h3>
+                          <p className="text-white/90 flex items-center gap-1">
+                            <MapPin className="h-4 w-4" />
+                            {trip.destination}
+                          </p>
+                        </div>
+                        {daysUntil && (
+                          <Badge className="absolute top-4 left-4 bg-white/90 text-vault-purple hover:bg-white">
+                            <Sparkles className="h-3 w-3 mr-1" />
+                            {daysUntil}
+                          </Badge>
+                        )}
+                        {isOngoing && (
+                          <Badge className="absolute top-4 left-4 bg-vault-green text-white animate-pulse">
+                            <Star className="h-3 w-3 mr-1 fill-white" />
+                            Happening Now!
+                          </Badge>
+                        )}
                       </div>
-                      {daysUntil && (
-                        <Badge className="absolute top-4 left-4 bg-white/90 text-vault-purple hover:bg-white">
-                          <Sparkles className="h-3 w-3 mr-1" />
-                          {daysUntil}
-                        </Badge>
-                      )}
-                      {isOngoing && (
-                        <Badge className="absolute top-4 left-4 bg-vault-green text-white animate-pulse">
-                          <Star className="h-3 w-3 mr-1 fill-white" />
-                          Happening Now!
-                        </Badge>
-                      )}
-                    </div>
-                    <CardContent className="pb-2 pt-4">
-                      <div className="flex items-center text-sm text-gray-600 dark:text-gray-400 mb-2">
-                        <Calendar className="h-4 w-4 mr-1 text-vault-purple" />
-                        {new Date(trip.start_date).toLocaleDateString()} -{" "}
-                        {new Date(trip.end_date).toLocaleDateString()}
-                      </div>
-                      <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                        <Users className="h-4 w-4 mr-1 text-vault-pink" />
-                        {/* Fixed: Show 1 member (the creator) by default, plus any additional members */}
-                        {trip.created_by === user.id ? trip.memberCount + 1 : trip.memberCount}{" "}
-                        {(trip.created_by === user.id ? trip.memberCount + 1 : trip.memberCount) === 1
-                          ? "adventurer"
-                          : "adventurers"}
-                      </div>
-                    </CardContent>
-                    <CardFooter className="pt-2 text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50">
-                      Created {formatDistanceToNow(new Date(trip.created_at), { addSuffix: true })}
-                    </CardFooter>
-                  </Card>
-                </Link>
+                      <CardContent className="pb-2 pt-4">
+                        <div className="flex items-center text-sm text-gray-600 dark:text-gray-400 mb-2">
+                          <Calendar className="h-4 w-4 mr-1 text-vault-purple" />
+                          {new Date(trip.start_date).toLocaleDateString()} -{" "}
+                          {new Date(trip.end_date).toLocaleDateString()}
+                        </div>
+                        <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                          <Users className="h-4 w-4 mr-1 text-vault-pink" />
+                          {/* Fixed: Show 1 member (the creator) by default, plus any additional members */}
+                          {trip.created_by === user.id ? trip.memberCount + 1 : trip.memberCount}{" "}
+                          {(trip.created_by === user.id ? trip.memberCount + 1 : trip.memberCount) === 1
+                            ? "adventurer"
+                            : "adventurers"}
+                        </div>
+                      </CardContent>
+                      <CardFooter className="pt-2 text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50">
+                        Created {formatDistanceToNow(new Date(trip.created_at), { addSuffix: true })}
+                      </CardFooter>
+                    </Card>
+                  </Link>
+                  {/* Show delete button if user is creator */}
+                  {trip.created_by === user.id && (
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleDeleteTrip(trip.id)
+                      }}
+                      title="Delete Trip"
+                      className="absolute top-2 right-2 z-20 p-2 rounded-full bg-white/80 hover:bg-red-100 text-red-600 shadow transition-colors"
+                    >
+                      <Trash className="h-5 w-5" />
+                    </button>
+                  )}
+                </div>
               )
             })}
             <Link href="/trips/create">
