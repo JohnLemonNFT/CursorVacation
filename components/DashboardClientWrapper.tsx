@@ -1080,11 +1080,7 @@ export default function DashboardClientWrapper() {
                         </div>
                         <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
                           <Users className="h-4 w-4 mr-1 text-vault-pink" />
-                          {/* Fixed: Show 1 member (the creator) by default, plus any additional members */}
-                          {trip.created_by === user.id ? trip.memberCount + 1 : trip.memberCount}{" "}
-                          {(trip.created_by === user.id ? trip.memberCount + 1 : trip.memberCount) === 1
-                            ? "adventurer"
-                            : "adventurers"}
+                          {trip.memberCount} {trip.memberCount === 1 ? "adventurer" : "adventurers"}
                         </div>
                       </CardContent>
                       <CardFooter className="pt-2 text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50">
