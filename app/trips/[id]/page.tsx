@@ -470,6 +470,15 @@ export default function TripDetail() {
         throw new Error("Authentication required")
       }
 
+      // Wait for auth state to be fully initialized
+      if (isLoading) {
+        console.log("Waiting for auth state to initialize...")
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        if (isLoading) {
+          throw new Error("Authentication state not initialized")
+        }
+      }
+
       console.log("Fetching trip details:", tripId)
 
       // Set a timeout for the fetch operation
@@ -512,7 +521,7 @@ export default function TripDetail() {
       console.error("Error in loadTripData:", error)
 
       if (error instanceof Error) {
-        if (error.message === "AUTH_ERROR" || error.message === "Authentication required") {
+        if (error.message === "AUTH_ERROR" || error.message === "Authentication required" || error.message === "Authentication state not initialized") {
           console.log("Auth error detected, redirecting to sign in")
           router.push("/auth/signin")
           return
