@@ -1,0 +1,63 @@
+import type React from "react"
+import "./globals.css"
+import type { Metadata, Viewport } from "next"
+import { Inter } from "next/font/google"
+import { ThemeProvider } from "@/components/theme-provider"
+import { AuthProvider } from "@/lib/auth-context"
+import { Toaster } from "@/components/toaster"
+import { MobileAppShell } from "@/components/mobile-app-shell"
+import { ErrorBoundary } from "@/components/error-boundary"
+import { ServiceWorkerRegistration } from "./sw-register"
+import { PagePersistence } from "@/components/page-persistence"
+import { AuthErrorHandler } from "@/components/auth-error-handler"
+
+const inter = Inter({ subsets: ["latin"] })
+
+export const metadata: Metadata = {
+  title: "VDH Vault | Family Vacation Planner",
+  description: "Plan, capture, and relive family vacations together",
+  manifest: "/manifest.json",
+  icons: {
+    icon: "/icon.png",
+    apple: "/icon.png",
+  },
+    generator: 'v0.dev'
+}
+
+export const viewport: Viewport = {
+  themeColor: "#8A4FFF",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+}
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="mobile-web-app-capable" content="yes" />
+      </head>
+      <body className={inter.className}>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
+          <AuthProvider>
+            <ErrorBoundary>
+              <MobileAppShell>
+                <AuthErrorHandler />
+                <PagePersistence />
+                {children}
+                <Toaster />
+                <ServiceWorkerRegistration />
+              </MobileAppShell>
+            </ErrorBoundary>
+          </AuthProvider>
+        </ThemeProvider>
+      </body>
+    </html>
+  )
+}

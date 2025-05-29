@@ -1,0 +1,18 @@
+{
+  "name": "VDH Vault",
+  "short_name": "VDH Vault",
+  "description": "Family vacation planner and memory keeper",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#8A4FFF",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
