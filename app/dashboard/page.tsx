@@ -68,6 +68,7 @@ export default function Dashboard() {
   const backgroundRefreshRef = useRef<NodeJS.Timeout | null>(null)
   const lastVisibilityChange = useRef<number>(0)
   const minimumVisibilityChangeInterval = 5000 // 5 seconds
+  const [backgroundRetryInterval, setBackgroundRetryInterval] = useState<NodeJS.Timeout | null>(null)
 
   // Check online status
   useEffect(() => {
@@ -187,7 +188,15 @@ export default function Dashboard() {
       if (!user || (hasFetchedTrips.current && !force)) return
       if (fetchAttempts >= maxFetchAttempts) {
         console.error("Max fetch attempts reached. Stopping retries.")
-        setDataError("Unable to load trips after several attempts. Please check your connection and try again later.")
+        setDataError("Unable to load trips after several attempts. We'll keep trying in the background, or you can refresh.")
+        // Start background retry if not already started
+        if (!backgroundRetryInterval) {
+          const interval = setInterval(() => {
+            console.log("Background retry: attempting to fetch trips...")
+            fetchTrips(true)
+          }, 30000)
+          setBackgroundRetryInterval(interval)
+        }
         return
       }
 
@@ -399,6 +408,12 @@ export default function Dashboard() {
           },
           5 * 60 * 1000,
         ) // 5 minutes
+
+        // If background retry was running, clear it
+        if (backgroundRetryInterval) {
+          clearInterval(backgroundRetryInterval)
+          setBackgroundRetryInterval(null)
+        }
       } catch (error) {
         console.error("Error in fetchTrips:", error)
         setDataError(error instanceof Error ? error.message : String(error))
@@ -420,14 +435,21 @@ export default function Dashboard() {
         if (fetchAttempts < maxFetchAttempts && navigator.onLine) {
           const backoffTime = Math.pow(2, fetchAttempts) * 1000
           console.log(`Will retry in ${backoffTime}ms (attempt ${fetchAttempts + 1} of ${maxFetchAttempts})`)
-
           retryTimeoutRef.current = setTimeout(() => {
             console.log(`Executing retry attempt ${fetchAttempts + 1}`)
             fetchTrips(true)
           }, backoffTime)
         } else if (fetchAttempts >= maxFetchAttempts) {
           console.error("Max fetch attempts reached. Stopping retries.")
-          setDataError("Unable to load trips after several attempts. Please check your connection and try again later.")
+          setDataError("Unable to load trips after several attempts. We'll keep trying in the background, or you can refresh.")
+          // Start background retry if not already started
+          if (!backgroundRetryInterval) {
+            const interval = setInterval(() => {
+              console.log("Background retry: attempting to fetch trips...")
+              fetchTrips(true)
+            }, 30000)
+            setBackgroundRetryInterval(interval)
+          }
         }
       } finally {
         setIsLoadingTrips(false)
@@ -435,16 +457,17 @@ export default function Dashboard() {
         setIsBackgroundRefreshing(false)
       }
     },
-    [user, fetchAttempts, maxFetchAttempts],
+    [user, fetchAttempts, maxFetchAttempts, backgroundRetryInterval],
   )
 
   // Initial load
   useEffect(() => {
     if (user && !isLoading) {
-      fetchTrips()
+      setTimeout(() => {
+        fetchTrips()
+      }, 500)
     }
-
-    // Cleanup function to clear any timeouts
+    // Cleanup function to clear any timeouts and intervals
     return () => {
       if (retryTimeoutRef.current) {
         clearTimeout(retryTimeoutRef.current)
@@ -452,8 +475,12 @@ export default function Dashboard() {
       if (backgroundRefreshRef.current) {
         clearTimeout(backgroundRefreshRef.current)
       }
+      if (backgroundRetryInterval) {
+        clearInterval(backgroundRetryInterval)
+        setBackgroundRetryInterval(null)
+      }
     }
-  }, [user, isLoading, fetchTrips])
+  }, [user, isLoading, fetchTrips, backgroundRetryInterval])
 
   useEffect(() => {
     const checkPendingInviteCode = async () => {
@@ -710,8 +737,9 @@ export default function Dashboard() {
           </div>
           <div className="text-red-600 font-bold text-xl mb-2">{dataError}</div>
           <Button onClick={() => { setFetchAttempts(0); setDataError(null); fetchTrips(true); }}>
-            Retry
+            Retry Now
           </Button>
+          <div className="mt-4 text-gray-600 text-sm">We'll keep trying in the background. If the connection is restored, your trips will appear automatically.</div>
         </div>
       </div>
     )
