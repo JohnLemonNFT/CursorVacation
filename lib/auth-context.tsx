@@ -37,6 +37,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.log("Initializing auth state...")
           setIsLoading(true)
 
+          // Ensure Supabase client is properly initialized
+          if (!supabase || !supabase.auth) {
+            console.error("Supabase client not properly initialized")
+            throw new Error("Database client not initialized")
+          }
+
           // Get session
           const { data: { session }, error: sessionError } = await supabase.auth.getSession()
           
@@ -49,6 +55,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             console.log("Session found, setting user:", session.user.id)
             setSession(session)
             setUser(session.user)
+            // Store in sessionStorage for quick access
+            sessionStorage.setItem("user", JSON.stringify(session.user))
           } else {
             console.log("No session found, checking sessionStorage")
             // Try to restore from sessionStorage
@@ -115,6 +123,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isLoading: isLoading || !isInitialized,
     signInWithGoogle: async () => {
       try {
+        // Ensure Supabase client is properly initialized
+        if (!supabase || !supabase.auth) {
+          throw new Error("Database client not initialized")
+        }
+
         const { data, error } = await supabase.auth.signInWithOAuth({
           provider: "google",
           options: {
@@ -131,6 +144,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     },
     signOut: async () => {
       try {
+        // Ensure Supabase client is properly initialized
+        if (!supabase || !supabase.auth) {
+          throw new Error("Database client not initialized")
+        }
+
         const { error } = await supabase.auth.signOut()
         if (error) throw error
         setSession(null)

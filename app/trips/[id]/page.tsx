@@ -473,10 +473,22 @@ export default function TripDetail() {
       // Wait for auth state to be fully initialized
       if (isLoading) {
         console.log("Waiting for auth state to initialize...")
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        if (isLoading) {
-          throw new Error("Authentication state not initialized")
+        let attempts = 0
+        const maxAttempts = 5
+        while (isLoading && attempts < maxAttempts) {
+          await new Promise(resolve => setTimeout(resolve, 1000))
+          attempts++
+          console.log(`Auth initialization attempt ${attempts}/${maxAttempts}`)
         }
+        if (isLoading) {
+          throw new Error("Authentication state not initialized after maximum attempts")
+        }
+      }
+
+      // Additional check to ensure all required dependencies are initialized
+      if (!supabase || !supabase.auth) {
+        console.error("Supabase client not properly initialized")
+        throw new Error("Database client not initialized")
       }
 
       console.log("Fetching trip details:", tripId)
@@ -521,7 +533,10 @@ export default function TripDetail() {
       console.error("Error in loadTripData:", error)
 
       if (error instanceof Error) {
-        if (error.message === "AUTH_ERROR" || error.message === "Authentication required" || error.message === "Authentication state not initialized") {
+        if (error.message === "AUTH_ERROR" || 
+            error.message === "Authentication required" || 
+            error.message === "Authentication state not initialized after maximum attempts" ||
+            error.message === "Database client not initialized") {
           console.log("Auth error detected, redirecting to sign in")
           router.push("/auth/signin")
           return
