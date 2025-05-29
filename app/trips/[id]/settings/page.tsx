@@ -166,8 +166,30 @@ export default function TripSettings() {
 
       // Clear any cached trip data
       try {
-        // Clear any localStorage cache for this trip
+        // Clear all trip-related cache
+        localStorage.removeItem(`cached-trip-${tripId}`)
         localStorage.removeItem(`trip-${tripId}-data`)
+        localStorage.removeItem(`trip-${tripId}-tab`)
+        
+        // Also clear any related caches that might be affected
+        const cachedTrips = localStorage.getItem("cached-trips")
+        if (cachedTrips) {
+          try {
+            const { trips, timestamp } = JSON.parse(cachedTrips)
+            // Remove this trip from the cached trips list
+            const updatedTrips = trips.filter((t: any) => t.id !== tripId)
+            localStorage.setItem(
+              "cached-trips",
+              JSON.stringify({
+                trips: updatedTrips,
+                timestamp: Date.now(),
+                version: "1.0"
+              })
+            )
+          } catch (e) {
+            console.warn("Could not update cached trips list:", e)
+          }
+        }
       } catch (e) {
         console.error("Error clearing cached trip data:", e)
       }

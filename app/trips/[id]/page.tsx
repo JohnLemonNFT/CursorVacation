@@ -41,6 +41,7 @@ import { TripMediaLibrary } from "@/components/trip-media-library"
 import { MobileHeader } from "@/components/mobile-header"
 import { useToast } from "@/components/ui/use-toast"
 import { cn } from "@/lib/utils"
+import { fetchTripDetails } from "@/lib/data-manager"
 
 type Trip = {
   id: string
@@ -237,6 +238,9 @@ export default function TripDetail() {
 
   // Set a timeout to show error if loading takes too long
   useEffect(() => {
+    let loadingTimer: NodeJS.Timeout | null = null
+    let errorTimer: NodeJS.Timeout | null = null
+
     if (isLoadingTrip) {
       if (!loadingStartTime) {
         setLoadingStartTime(Date.now())
@@ -244,20 +248,21 @@ export default function TripDetail() {
 
       // Start a timer to update loading duration every second
       if (!loadingTimerRef.current) {
-        loadingTimerRef.current = setInterval(() => {
+        loadingTimer = setInterval(() => {
           setLoadingDuration(Math.floor((Date.now() - loadingStartTime) / 1000))
         }, 1000)
+        loadingTimerRef.current = loadingTimer
       }
 
       // Set a timeout to show error after 15 seconds
       if (!loadingTimeout) {
-        const timeout = setTimeout(() => {
+        errorTimer = setTimeout(() => {
           if (isLoadingTrip) {
             setError("Loading is taking longer than expected. Please try refreshing the page.")
             setIsLoadingTrip(false)
           }
         }, 15000) // 15 seconds timeout
-        setLoadingTimeout(timeout)
+        setLoadingTimeout(errorTimer)
       }
     } else {
       // Clear timers when not loading
@@ -274,6 +279,12 @@ export default function TripDetail() {
     }
 
     return () => {
+      if (loadingTimer) {
+        clearInterval(loadingTimer)
+      }
+      if (errorTimer) {
+        clearTimeout(errorTimer)
+      }
       if (loadingTimerRef.current) {
         clearInterval(loadingTimerRef.current)
         loadingTimerRef.current = null
@@ -292,12 +303,16 @@ export default function TripDetail() {
         const cachedTripData = localStorage.getItem(`cached-trip-${tripId}`)
         if (cachedTripData) {
           const parsedData = JSON.parse(cachedTripData)
+          // Standardize cache version to "1.0"
+          if (parsedData.version !== "1.0") {
+            console.log("Cache version mismatch, will fetch fresh data")
+            return
+          }
           if (parsedData.trip && parsedData.members) {
             console.log("Using cached trip data")
             setTrip(parsedData.trip)
             setMembers(parsedData.members)
             setDataSource("cache")
-            // Don't set isLoadingTrip to false here, let the network fetch handle it
           }
         }
       } catch (e) {
@@ -344,7 +359,12 @@ export default function TripDetail() {
 
   // Handle visibility change (tab switching)
   useEffect(() => {
+    let isMounted = true
+    let visibilityChangeTimeout: NodeJS.Timeout | null = null
+
     const handleVisibilityChange = () => {
+      if (!isMounted) return
+
       if (document.visibilityState === "visible") {
         console.log("Trip page is now visible")
 
@@ -355,7 +375,18 @@ export default function TripDetail() {
         if (timeSinceLastChange > 30000) { // Increased from 15 seconds to 30 seconds
           console.log("It's been more than 30 seconds, refreshing data")
           lastVisibilityChange.current = now
-          loadTripData(true)
+          
+          // Clear any existing timeout
+          if (visibilityChangeTimeout) {
+            clearTimeout(visibilityChangeTimeout)
+          }
+
+          // Add a small delay to prevent rapid refreshes
+          visibilityChangeTimeout = setTimeout(() => {
+            if (isMounted) {
+              loadTripData(true)
+            }
+          }, 1000)
         } else {
           console.log("Skipping refresh, last visibility change was too recent")
         }
@@ -373,6 +404,10 @@ export default function TripDetail() {
     window.addEventListener("focus", handleFocus)
 
     return () => {
+      isMounted = false
+      if (visibilityChangeTimeout) {
+        clearTimeout(visibilityChangeTimeout)
+      }
       document.removeEventListener("visibilitychange", handleVisibilityChange)
       window.removeEventListener("focus", handleFocus)
     }
@@ -464,30 +499,13 @@ export default function TripDetail() {
       setFetchAttempts((prev) => prev + 1)
       setLoadingStartTime(Date.now())
 
-      // Ensure we have a valid user ID before proceeding
+      // Simple auth check
       if (!user.id) {
-        console.error("No user ID available")
         throw new Error("Authentication required")
-      }
-
-      // Wait for auth state to be fully initialized
-      if (isLoading) {
-        console.log("Waiting for auth state to initialize...")
-        let attempts = 0
-        const maxAttempts = 5
-        while (isLoading && attempts < maxAttempts) {
-          await new Promise(resolve => setTimeout(resolve, 1000))
-          attempts++
-          console.log(`Auth initialization attempt ${attempts}/${maxAttempts}`)
-        }
-        if (isLoading) {
-          throw new Error("Authentication state not initialized after maximum attempts")
-        }
       }
 
       // Additional check to ensure all required dependencies are initialized
       if (!supabase || !supabase.auth) {
-        console.error("Supabase client not properly initialized")
         throw new Error("Database client not initialized")
       }
 
@@ -509,20 +527,15 @@ export default function TripDetail() {
       }
 
       // Only update state if the fetch was successful
-      if (
-        result &&
-        typeof result === "object" &&
-        "trip" in result &&
-        "members" in result
-      ) {
+      if (result && typeof result === "object" && "trip" in result && "members" in result) {
         setTrip(result.trip)
         setMembers(result.members)
         setDataSource(result.fromCache ? "cache" : "network")
         setIsOffline(result.offline || false)
         setIsUserMember(true)
         setError("")
-        setFetchAttempts(0) // Only reset here!
-        console.log("Trip data loaded successfully. Resetting fetchAttempts.")
+        setFetchAttempts(0)
+        console.log("Trip data loaded successfully")
       } else {
         throw new Error("Invalid response format")
       }
@@ -533,19 +546,27 @@ export default function TripDetail() {
       console.error("Error in loadTripData:", error)
 
       if (error instanceof Error) {
-        if (error.message === "AUTH_ERROR" || 
-            error.message === "Authentication required" || 
-            error.message === "Authentication state not initialized after maximum attempts" ||
-            error.message === "Database client not initialized") {
-          console.log("Auth error detected, redirecting to sign in")
-          router.push("/auth/signin")
-          return
-        } else if (error.message === "ACCESS_DENIED") {
-          router.push("/dashboard")
-          return
+        // Handle specific error types
+        switch (error.message) {
+          case "AUTH_ERROR":
+          case "Authentication required":
+            router.push("/auth/signin")
+            return
+          case "ACCESS_DENIED":
+            router.push("/dashboard")
+            return
+          case "Database client not initialized":
+            setError("Unable to connect to the database. Please try again.")
+            break
+          case "Fetch operation timed out":
+            setError("The request took too long to complete. Please check your connection and try again.")
+            break
+          case "Invalid response format":
+            setError("Received invalid data from the server. Please try again.")
+            break
+          default:
+            setError(error.message)
         }
-
-        setError(error.message)
       } else {
         setError("An unexpected error occurred. Please try again.")
       }
@@ -712,29 +733,6 @@ export default function TripDetail() {
   }
 
   // Mock functions for data fetching and connection checks
-  const fetchTripDetails = async (tripId: string, userId: string, force: boolean) => {
-    // Simulate fetching trip details
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          trip: {
-            id: tripId,
-            name: "My Trip",
-            destination: "Paris",
-            start_date: "2024-08-01",
-            end_date: "2024-08-10",
-            invite_code: "ABC123XYZ",
-            shared_album_url: null,
-            created_by: userId,
-          },
-          members: [],
-          fromCache: false,
-          offline: false,
-        })
-      }, 500)
-    })
-  }
-
   const checkConnection = async (force: boolean) => {
     // Simulate checking connection status
     return new Promise((resolve) => {

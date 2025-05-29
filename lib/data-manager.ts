@@ -293,7 +293,7 @@ export async function fetchTripDetails(tripId: string, userId: string, force = f
         trip: tripData,
         members: membersData || [],
         timestamp: Date.now(),
-        version: "1.3"
+        version: "1.0"
       }
       localStorage.setItem(`cached-trip-${tripId}`, JSON.stringify(cacheData))
       console.log("💾 Cached trip data")
