@@ -374,105 +374,115 @@ export function TripTravelInfo({
       )}
 
       <div className="grid grid-cols-1 gap-4">
-        {members.map((member, index) => (
-          <Card key={member.id} className="animate-fade-in" style={{ animationDelay: `${index * 0.05}s` }}>
-            <CardHeader className="pb-2">
-              <div className="flex items-center gap-3">
-                {member.profile.avatar_url ? (
-                  <img
-                    src={member.profile.avatar_url || "/placeholder.svg"}
-                    alt={member.profile.full_name || "User"}
-                    className="w-12 h-12 rounded-full"
-                  />
-                ) : (
-                  <div className="w-12 h-12 rounded-full bg-vault-purple flex items-center justify-center text-white font-bold">
-                    {member.profile.full_name?.[0] || "U"}
-                  </div>
-                )}
-                <div>
-                  <div className="flex items-center gap-2">
-                    <CardTitle className="text-lg">
-                      {member.profile.full_name || member.profile.email || "Unknown"}
-                    </CardTitle>
-                    {member.role === "admin" && (
-                      <Badge variant="outline" className="text-xs">
-                        Trip Organizer
-                      </Badge>
+        {members.map((member, index) => {
+          let profile = null;
+          if (member.profile) {
+            if (Array.isArray(member.profile)) {
+              profile = member.profile[0] || null;
+            } else {
+              profile = member.profile;
+            }
+          }
+          return (
+            <Card key={member.id} className="animate-fade-in" style={{ animationDelay: `${index * 0.05}s` }}>
+              <CardHeader className="pb-2">
+                <div className="flex items-center gap-3">
+                  {profile && profile.avatar_url ? (
+                    <img
+                      src={profile.avatar_url || "/placeholder.svg"}
+                      alt={profile.full_name || "User"}
+                      className="w-12 h-12 rounded-full"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded-full bg-vault-purple flex items-center justify-center text-white font-bold">
+                      {profile?.full_name?.[0] || "U"}
+                    </div>
+                  )}
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <CardTitle className="text-lg">
+                        {profile?.full_name || profile?.email || "Unknown"}
+                      </CardTitle>
+                      {member.role === "admin" && (
+                        <Badge variant="outline" className="text-xs">
+                          Trip Organizer
+                        </Badge>
+                      )}
+                    </div>
+                    {member.travel_method && (
+                      <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
+                        {getTravelMethodIcon(member.travel_method)}
+                        <span className="capitalize">{member.travel_method}</span>
+                      </div>
                     )}
                   </div>
-                  {member.travel_method && (
-                    <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
-                      {getTravelMethodIcon(member.travel_method)}
-                      <span className="capitalize">{member.travel_method}</span>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                  {member.arrival_date && (
+                    <div className="space-y-1">
+                      <div className="flex items-center text-gray-500 dark:text-gray-400">
+                        <Calendar className="h-4 w-4 mr-1" />
+                        <span>Arrival</span>
+                      </div>
+                      <div className="font-medium flex items-center gap-2">
+                        <span>{format(new Date(member.arrival_date), "MMM d, yyyy")}</span>
+                        {member.arrival_time && (
+                          <div className="flex items-center text-gray-600 dark:text-gray-300">
+                            <Clock className="h-3 w-3 mr-1" />
+                            <span>{formatTime(member.arrival_time)}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {member.departure_date && (
+                    <div className="space-y-1">
+                      <div className="flex items-center text-gray-500 dark:text-gray-400">
+                        <Calendar className="h-4 w-4 mr-1" />
+                        <span>Departure</span>
+                      </div>
+                      <div className="font-medium flex items-center gap-2">
+                        <span>{format(new Date(member.departure_date), "MMM d, yyyy")}</span>
+                        {member.departure_time && (
+                          <div className="flex items-center text-gray-600 dark:text-gray-300">
+                            <Clock className="h-3 w-3 mr-1" />
+                            <span>{formatTime(member.departure_time)}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {!member.arrival_date && !member.departure_date && (
+                    <div className="col-span-2 text-gray-500 dark:text-gray-400 italic">
+                      No travel information provided yet
                     </div>
                   )}
                 </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                {member.arrival_date && (
-                  <div className="space-y-1">
-                    <div className="flex items-center text-gray-500 dark:text-gray-400">
-                      <Calendar className="h-4 w-4 mr-1" />
-                      <span>Arrival</span>
-                    </div>
-                    <div className="font-medium flex items-center gap-2">
-                      <span>{format(new Date(member.arrival_date), "MMM d, yyyy")}</span>
-                      {member.arrival_time && (
-                        <div className="flex items-center text-gray-600 dark:text-gray-300">
-                          <Clock className="h-3 w-3 mr-1" />
-                          <span>{formatTime(member.arrival_time)}</span>
-                        </div>
-                      )}
-                    </div>
+
+                {member.flight_details && (
+                  <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-md">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+                      {member.travel_method === "plane" ? "Flight Details" : "Travel Details"}
+                    </p>
+                    <p className="text-sm whitespace-pre-line">{member.flight_details}</p>
                   </div>
                 )}
-
-                {member.departure_date && (
-                  <div className="space-y-1">
-                    <div className="flex items-center text-gray-500 dark:text-gray-400">
-                      <Calendar className="h-4 w-4 mr-1" />
-                      <span>Departure</span>
-                    </div>
-                    <div className="font-medium flex items-center gap-2">
-                      <span>{format(new Date(member.departure_date), "MMM d, yyyy")}</span>
-                      {member.departure_time && (
-                        <div className="flex items-center text-gray-600 dark:text-gray-300">
-                          <Clock className="h-3 w-3 mr-1" />
-                          <span>{formatTime(member.departure_time)}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {!member.arrival_date && !member.departure_date && (
-                  <div className="col-span-2 text-gray-500 dark:text-gray-400 italic">
-                    No travel information provided yet
-                  </div>
-                )}
-              </div>
-
-              {member.flight_details && (
-                <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-md">
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
-                    {member.travel_method === "plane" ? "Flight Details" : "Travel Details"}
-                  </p>
-                  <p className="text-sm whitespace-pre-line">{member.flight_details}</p>
-                </div>
+              </CardContent>
+              {member.user_id === userId && (
+                <CardFooter>
+                  <Button variant="outline" size="sm" className="w-full" onClick={handleEdit}>
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit My Travel Info
+                  </Button>
+                </CardFooter>
               )}
-            </CardContent>
-            {member.user_id === userId && (
-              <CardFooter>
-                <Button variant="outline" size="sm" className="w-full" onClick={handleEdit}>
-                  <Edit className="h-4 w-4 mr-2" />
-                  Edit My Travel Info
-                </Button>
-              </CardFooter>
-            )}
-          </Card>
-        ))}
+            </Card>
+          )
+        })}
       </div>
     </div>
   )

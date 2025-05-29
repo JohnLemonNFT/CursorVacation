@@ -270,7 +270,7 @@ export async function fetchTripDetails(tripId: string, userId: string, force = f
         arrival_time,
         departure_time,
         travel_method,
-        profile:profiles(full_name, avatar_url, email)
+        profile:profiles!inner(full_name, avatar_url, email)
       `)
       .eq("trip_id", tripId)
 
