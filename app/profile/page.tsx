@@ -38,37 +38,59 @@ export default function ProfilePage() {
   const [showPhotoOptions, setShowPhotoOptions] = useState(false)
 
   useEffect(() => {
-    const fetchProfile = async () => {
+    const fetchOrCreateProfile = async () => {
       if (!user) return
-
+      setIsLoadingProfile(true)
       try {
-        setIsLoadingProfile(true)
-
-        const { data, error } = await supabase
+        let { data, error } = await supabase
           .from("profiles")
           .select("id, full_name, avatar_url, email")
           .eq("id", user.id)
           .single()
 
-        if (error) {
-          console.error("Error fetching profile:", error)
-          return
+        if (error && error.code === "PGRST116") {
+          // No profile found, create one
+          const { error: insertError } = await supabase.from("profiles").insert({
+            id: user.id,
+            full_name: user.user_metadata?.full_name || user.email || "",
+            avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || null,
+            email: user.email,
+          })
+          if (insertError) {
+            console.error("Error creating profile:", insertError)
+            setIsLoadingProfile(false)
+            return
+          }
+          // Refetch profile
+          const { data: newData, error: newError } = await supabase
+            .from("profiles")
+            .select("id, full_name, avatar_url, email")
+            .eq("id", user.id)
+            .single()
+          if (newError) {
+            setIsLoadingProfile(false)
+            return
+          }
+          setProfile(newData)
+          setFormData({
+            fullName: newData.full_name || "",
+            avatarUrl: newData.avatar_url || "",
+          })
+        } else if (data) {
+          setProfile(data)
+          setFormData({
+            fullName: data.full_name || "",
+            avatarUrl: data.avatar_url || "",
+          })
         }
-
-        setProfile(data)
-        setFormData({
-          fullName: data.full_name || "",
-          avatarUrl: data.avatar_url || "",
-        })
       } catch (error) {
-        console.error("Error in fetchProfile:", error)
+        console.error("Error in fetchOrCreateProfile:", error)
       } finally {
         setIsLoadingProfile(false)
       }
     }
-
     if (user) {
-      fetchProfile()
+      fetchOrCreateProfile()
     }
   }, [user])
 

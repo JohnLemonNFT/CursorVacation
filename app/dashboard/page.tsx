@@ -17,6 +17,7 @@ import {
   RefreshCw,
   AlertCircle,
   WifiOff,
+  User,
 } from "lucide-react"
 import Link from "next/link"
 import { supabase, handleSupabaseError } from "@/lib/supabase"
@@ -69,6 +70,7 @@ export default function Dashboard() {
   const lastVisibilityChange = useRef<number>(0)
   const minimumVisibilityChangeInterval = 5000 // 5 seconds
   const [backgroundRetryInterval, setBackgroundRetryInterval] = useState<NodeJS.Timeout | null>(null)
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false)
 
   // Check online status
   useEffect(() => {
@@ -155,31 +157,55 @@ export default function Dashboard() {
   }, [user, isLoading])
 
   useEffect(() => {
-    const fetchProfile = async () => {
+    const fetchOrCreateProfile = async () => {
       if (!user) return
-
+      setIsLoadingProfile(true)
       try {
-        const { data, error } = await supabase
+        let { data, error } = await supabase
           .from("profiles")
           .select("id, full_name, avatar_url, email")
           .eq("id", user.id)
           .single()
 
-        if (error) {
-          console.error("Error fetching profile:", error)
-          return
-        }
-
-        if (data) {
+        if (error && error.code === "PGRST116") {
+          // No profile found, create one
+          const { error: insertError } = await supabase.from("profiles").insert({
+            id: user.id,
+            full_name: user.user_metadata?.full_name || user.email || "",
+            avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || null,
+            email: user.email,
+          })
+          if (insertError) {
+            console.error("Error creating profile:", insertError)
+            setDataError("Failed to create profile. Please try again.")
+            setIsLoadingProfile(false)
+            return
+          }
+          // Refetch profile
+          const { data: newData, error: newError } = await supabase
+            .from("profiles")
+            .select("id, full_name, avatar_url, email")
+            .eq("id", user.id)
+            .single()
+          if (newError) {
+            setDataError("Failed to fetch profile after creation.")
+            setIsLoadingProfile(false)
+            return
+          }
+          setProfile(newData)
+        } else if (data) {
           setProfile(data)
+        } else if (error) {
+          setDataError("Failed to fetch profile.")
         }
       } catch (error) {
-        console.error("Error fetching profile:", error)
+        setDataError("Unexpected error fetching/creating profile.")
+      } finally {
+        setIsLoadingProfile(false)
       }
     }
-
     if (user) {
-      fetchProfile()
+      fetchOrCreateProfile()
     }
   }, [user])
 
@@ -683,14 +709,31 @@ export default function Dashboard() {
     return colorSets[combinedHash]
   }
 
-  if (isLoading) {
+  // Wait for user/session after OAuth redirect
+  useEffect(() => {
+    // If we are on the dashboard and user is not ready, show loading
+    if (!user && !isLoading) {
+      // Poll for session for a few seconds
+      let attempts = 0
+      const maxAttempts = 10
+      const interval = setInterval(() => {
+        attempts++
+        if (user || isLoading || attempts > maxAttempts) {
+          clearInterval(interval)
+        }
+      }, 300)
+      return () => clearInterval(interval)
+    }
+  }, [user, isLoading])
+
+  if (isLoading || isLoadingProfile || (!user && !isLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-vault-purple/10 via-vault-pink/10 to-vault-yellow/10">
         <div className="text-center">
           <div className="animate-bounce mb-4">
-            <Plane className="h-12 w-12 text-vault-purple mx-auto" />
+            <User className="h-12 w-12 text-vault-purple mx-auto" />
           </div>
-          <div className="animate-pulse text-vault-purple font-medium">Loading your adventures...</div>
+          <div className="animate-pulse text-vault-purple font-medium">Signing you in...</div>
         </div>
       </div>
     )
