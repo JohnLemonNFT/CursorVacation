@@ -225,6 +225,15 @@ export default function ProfilePage() {
         return
       }
 
+      // Re-fetch the updated profile from Supabase
+      const { data: updatedProfile } = await supabase
+        .from("profiles")
+        .select("id, full_name, avatar_url, email")
+        .eq("id", user.id)
+        .single()
+      setProfile(updatedProfile)
+      setAvatarPreview(null)
+
       toast({
         title: "Profile Updated! 🎉",
         description: "Looking good! Your profile has been updated successfully",
