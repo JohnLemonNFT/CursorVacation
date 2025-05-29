@@ -342,15 +342,27 @@ export default function DashboardClientWrapper() {
         // Get additional trips where user is a member
         let additionalTrips: any[] = []
         if (memberTrips && memberTrips.length > 0) {
-          const tripIds = memberTrips.map((member) => member.trip_id)
-          const { data, error } = await supabase.from("trips").select("*").in("id", tripIds)
+          // Create a Set of trip IDs from userTrips to avoid duplicates
+          const userTripIds = new Set(userTrips?.map(trip => trip.id) || [])
+          
+          // Filter out trips that the user already created
+          const uniqueMemberTripIds = memberTrips
+            .map(member => member.trip_id)
+            .filter(id => !userTripIds.has(id))
 
-          if (error) {
-            throw new Error(error.message || "Error fetching additional trips")
-          }
+          if (uniqueMemberTripIds.length > 0) {
+            const { data, error } = await supabase
+              .from("trips")
+              .select("*")
+              .in("id", uniqueMemberTripIds)
 
-          if (data) {
-            additionalTrips = data
+            if (error) {
+              throw new Error(error.message || "Error fetching additional trips")
+            }
+
+            if (data) {
+              additionalTrips = data
+            }
           }
         }
 
