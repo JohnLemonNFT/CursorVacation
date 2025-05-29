@@ -1,3 +1,4 @@
+// TODO: Replace placeholder-logo.png with your real app icon before production.
 import { createClient } from "@supabase/supabase-js"
 import type { Database } from "@/types/supabase"
 
@@ -12,8 +13,8 @@ declare global {
   }
 }
 
-const supabaseUrl = typeof window !== 'undefined' ? window.process.env.NEXT_PUBLIC_SUPABASE_URL : process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = typeof window !== 'undefined' ? window.process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY : process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
 // Create a single supabase client for the entire app
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {

@@ -18,8 +18,8 @@ export const metadata: Metadata = {
   description: "Plan, capture, and relive family vacations together",
   manifest: "/manifest.json",
   icons: {
-    icon: "/icon.png",
-    apple: "/icon.png",
+    icon: "/placeholder-logo.png",
+    apple: "/placeholder-logo.png",
   },
     generator: 'v0.dev'
 }
