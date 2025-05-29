@@ -25,6 +25,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isInitialized, setIsInitialized] = useState(false)
   const initializationPromise = useRef<Promise<void> | null>(null)
   const hasRedirected = useRef(false)
+  const router = useRouter()
 
   useEffect(() => {
     const initializeAuth = async () => {
@@ -45,7 +46,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
           // Get session
           const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-          console.log("[AUTH] supabase.auth.getSession() returned:", session, sessionError)
+          console.log("[AUTH] supabase.auth.getSession() returned:", session?.user?.id, sessionError)
           
           if (sessionError) {
             console.error("[AUTH] Error getting session:", sessionError)
@@ -57,6 +58,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setSession(session)
             setUser(session.user)
             sessionStorage.setItem("user", JSON.stringify(session.user))
+
+            // Check if we need to redirect
+            const redirectPath = sessionStorage.getItem("auth-redirect")
+            if (redirectPath && !hasRedirected.current) {
+              console.log("[AUTH] Redirecting to:", redirectPath)
+              hasRedirected.current = true
+              sessionStorage.removeItem("auth-redirect")
+              router.push(redirectPath)
+            }
           } else {
             console.log("[AUTH] No session found, checking sessionStorage")
             // Try to restore from sessionStorage
@@ -75,7 +85,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
           // Set up auth state change listener
           const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-            console.log("[AUTH] Auth state changed:", event, session?.user?.id, session)
+            console.log("[AUTH] Auth state changed:", event, session?.user?.id)
             
             // Wait for initialization to complete
             if (initializationPromise.current) {
@@ -87,11 +97,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               setSession(session)
               setUser(session.user)
               sessionStorage.setItem("user", JSON.stringify(session.user))
+
+              // Check if we need to redirect
+              const redirectPath = sessionStorage.getItem("auth-redirect")
+              if (redirectPath && !hasRedirected.current) {
+                console.log("[AUTH] Redirecting to:", redirectPath)
+                hasRedirected.current = true
+                sessionStorage.removeItem("auth-redirect")
+                router.push(redirectPath)
+              }
             } else if (event === "SIGNED_OUT") {
               console.log("[AUTH] User signed out")
               setSession(null)
               setUser(null)
               sessionStorage.removeItem("user")
+              hasRedirected.current = false
             }
           })
 
@@ -115,7 +135,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error("[AUTH] Failed to initialize auth:", error)
       setIsLoading(false)
     })
-  }, [])
+  }, [router])
 
   useEffect(() => {
     console.log("[AUTH] AuthContext state:", { user, session, isLoading })

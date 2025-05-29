@@ -11,6 +11,9 @@ export async function GET(request: NextRequest) {
     const code = requestUrl.searchParams.get("code")
     const error = requestUrl.searchParams.get("error")
     const errorDescription = requestUrl.searchParams.get("error_description")
+    const next = requestUrl.searchParams.get("next") || "/dashboard"
+
+    console.log("Auth callback received:", { code: !!code, error, errorDescription, next })
 
     // Handle OAuth error
     if (error) {
@@ -29,7 +32,7 @@ export async function GET(request: NextRequest) {
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
 
     // Exchange the code for a session
-    const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
+    const { error: exchangeError, data } = await supabase.auth.exchangeCodeForSession(code)
 
     if (exchangeError) {
       console.error("Error exchanging code for session:", exchangeError.message)
@@ -38,8 +41,18 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Redirect to dashboard after successful authentication
-    return NextResponse.redirect(new URL("/dashboard?refresh", request.url))
+    console.log("Successfully exchanged code for session:", { userId: data.session?.user?.id })
+
+    // Store the intended destination in session storage
+    const response = NextResponse.redirect(new URL("/dashboard", request.url))
+    response.cookies.set("auth-redirect", next, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+    })
+
+    return response
   } catch (error) {
     console.error("Unexpected error in auth callback:", error)
     return NextResponse.redirect(new URL("/auth/signin?error=unexpected", request.url))

@@ -151,6 +151,7 @@ export default function DashboardClientWrapper() {
       if (!user) return
       setIsLoadingProfile(true)
       try {
+        // First try to get the profile
         let { data, error } = await supabase
           .from("profiles")
           .select("id, full_name, avatar_url, email")
@@ -158,25 +159,28 @@ export default function DashboardClientWrapper() {
           .single()
 
         if (error && error.code === "PGRST116") {
-          // No profile found, create one
-          const { error: insertError } = await supabase.from("profiles").insert({
-            id: user.id,
-            full_name: user.user_metadata?.full_name || user.email || "",
-            avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || null,
-            email: user.email,
+          // No profile found, create one using RPC to bypass RLS
+          const { error: insertError } = await supabase.rpc('create_profile', {
+            profile_id: user.id,
+            profile_full_name: user.user_metadata?.full_name || user.email || "",
+            profile_avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || null,
+            profile_email: user.email
           })
+
           if (insertError) {
             console.error("Error creating profile:", insertError)
             setDataError("Failed to create profile. Please try again.")
             setIsLoadingProfile(false)
             return
           }
-          // Refetch profile
+
+          // Refetch profile after creation
           const { data: newData, error: newError } = await supabase
             .from("profiles")
             .select("id, full_name, avatar_url, email")
             .eq("id", user.id)
             .single()
+
           if (newError) {
             setDataError("Failed to fetch profile after creation.")
             setIsLoadingProfile(false)

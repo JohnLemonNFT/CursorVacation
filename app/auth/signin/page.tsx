@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import Link from "next/link"
 import { FcGoogle } from "react-icons/fc"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useToast } from "@/components/ui/use-toast"
 
 export default function SignIn() {
@@ -16,24 +16,47 @@ export default function SignIn() {
   const [isSigningIn, setIsSigningIn] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { toast } = useToast()
 
   // If user is already logged in, redirect to dashboard
   useEffect(() => {
     if (user && !authLoading) {
+      console.log("User is logged in, redirecting to dashboard")
       router.push("/dashboard")
     }
   }, [user, authLoading, router])
+
+  // Handle error from URL params
+  useEffect(() => {
+    const error = searchParams.get("error")
+    if (error) {
+      console.error("Auth error from URL:", error)
+      setError(decodeURIComponent(error))
+      toast({
+        title: "Sign In Failed",
+        description: decodeURIComponent(error),
+        variant: "destructive",
+      })
+    }
+  }, [searchParams, toast])
 
   const handleSignIn = async () => {
     try {
       setError(null)
       setIsSigningIn(true)
       console.log("Starting Google sign-in process...")
-      await signInWithGoogle()
+      
+      const { url } = await signInWithGoogle()
+      console.log("Redirecting to Google sign-in:", url)
+      
+      // Store the current path for after sign-in
+      sessionStorage.setItem("auth-redirect", window.location.pathname)
+      
+      // Redirect to Google sign-in
+      window.location.href = url
 
       // We'll set a timeout to reset the signing in state if it takes too long
-      // This prevents the button from staying disabled indefinitely
       setTimeout(() => {
         setIsSigningIn(false)
       }, 10000) // Reset after 10 seconds if no response

@@ -95,6 +95,7 @@ export function PWAInstallPrompt() {
   const handleInstallClick = async () => {
     if (platform === "ios") {
       setShowInstructions(true)
+      console.log("[PWA] Showing iOS install instructions dialog")
     } else if (deferredPrompt) {
       // Show the install prompt for Android/Desktop
       deferredPrompt.prompt()
@@ -193,7 +194,7 @@ export function PWAInstallPrompt() {
   // iOS Installation Instructions Dialog
   if (showInstructions && platform === "ios") {
     return (
-      <Dialog open={showInstructions} onOpenChange={setShowInstructions}>
+      <Dialog open={showInstructions} onOpenChange={() => {}} modal>
         <DialogContent className="max-w-sm mx-auto">
           <DialogHeader>
             <DialogTitle>Install VDH Vault</DialogTitle>
