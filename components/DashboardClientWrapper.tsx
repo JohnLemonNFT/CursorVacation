@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils"
 import { checkConnection, attemptReconnect, type ConnectionState } from "@/lib/data-manager"
 import { Card, CardHeader, CardTitle, CardDescription, CardFooter, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { User, Heart, Plane, PlusCircle, Users, Calendar, MapPin, Sparkles, Star, RefreshCw, WifiOff, AlertCircle, Camera, Trash } from "lucide-react"
+import { User, Heart, Plane, PlusCircle, Users, Calendar, MapPin, Sparkles, Star, RefreshCw, WifiOff, AlertCircle, Camera } from "lucide-react"
 
 // Types
 // (You may want to move the Trip type here if not already imported)
@@ -727,39 +727,6 @@ export default function DashboardClientWrapper() {
     }
   }, [searchParams, user, isLoading])
 
-  const handleDeleteTrip = async (tripId: string) => {
-    if (!window.confirm("Are you sure you want to delete this trip? This cannot be undone.")) return;
-    try {
-      // Optimistically update UI
-      setTrips((prev) => prev.filter((trip) => trip.id !== tripId))
-      // Delete trip from Supabase (will fail if not creator due to RLS)
-      const { error } = await supabase.from("trips").delete().eq("id", tripId)
-      if (error) {
-        console.error("Error deleting trip:", error)
-        toast({
-          title: "Error",
-          description: error.message || "Failed to delete trip. Please try again.",
-          variant: "destructive",
-        })
-        // Optionally, refetch trips to restore UI if needed
-        fetchTrips(true)
-        return
-      }
-      toast({
-        title: "Trip Deleted",
-        description: "Your trip was deleted successfully.",
-      })
-    } catch (error) {
-      console.error("Error deleting trip (unexpected):", error)
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : String(error),
-        variant: "destructive",
-      })
-      fetchTrips(true)
-    }
-  }
-
   if (isLoading || isLoadingProfile || (!user && !isLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-vault-purple/10 via-vault-pink/10 to-vault-yellow/10">
@@ -1113,20 +1080,6 @@ export default function DashboardClientWrapper() {
                       </CardFooter>
                     </Card>
                   </Link>
-                  {/* Show delete button if user is creator */}
-                  {trip.created_by === user.id && (
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleDeleteTrip(trip.id)
-                      }}
-                      title="Delete Trip"
-                      className="absolute top-2 right-2 z-20 p-2 rounded-full bg-white/80 hover:bg-red-100 text-red-600 shadow transition-colors"
-                    >
-                      <Trash className="h-5 w-5" />
-                    </button>
-                  )}
                 </div>
               )
             })}
