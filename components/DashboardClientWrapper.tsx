@@ -735,20 +735,27 @@ export default function DashboardClientWrapper() {
       // Delete trip from Supabase (will fail if not creator due to RLS)
       const { error } = await supabase.from("trips").delete().eq("id", tripId)
       if (error) {
-        throw error
+        console.error("Error deleting trip:", error)
+        toast({
+          title: "Error",
+          description: error.message || "Failed to delete trip. Please try again.",
+          variant: "destructive",
+        })
+        // Optionally, refetch trips to restore UI if needed
+        fetchTrips(true)
+        return
       }
       toast({
         title: "Trip Deleted",
         description: "Your trip was deleted successfully.",
       })
     } catch (error) {
-      console.error("Error deleting trip:", error)
+      console.error("Error deleting trip (unexpected):", error)
       toast({
         title: "Error",
-        description: "Failed to delete trip. Please try again.",
+        description: error instanceof Error ? error.message : String(error),
         variant: "destructive",
       })
-      // Optionally, refetch trips to restore UI if needed
       fetchTrips(true)
     }
   }
