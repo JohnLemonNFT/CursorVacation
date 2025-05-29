@@ -34,40 +34,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       initializationPromise.current = (async () => {
         try {
-          console.log("Initializing auth state...")
+          console.log("[AUTH] Initializing auth state...")
           setIsLoading(true)
 
           // Ensure Supabase client is properly initialized
           if (!supabase || !supabase.auth) {
-            console.error("Supabase client not properly initialized")
+            console.error("[AUTH] Supabase client not properly initialized")
             throw new Error("Database client not initialized")
           }
 
           // Get session
           const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+          console.log("[AUTH] supabase.auth.getSession() returned:", session, sessionError)
           
           if (sessionError) {
-            console.error("Error getting session:", sessionError)
+            console.error("[AUTH] Error getting session:", sessionError)
             throw sessionError
           }
 
           if (session?.user) {
-            console.log("Session found, setting user:", session.user.id)
+            console.log("[AUTH] Session found, setting user:", session.user.id)
             setSession(session)
             setUser(session.user)
-            // Store in sessionStorage for quick access
             sessionStorage.setItem("user", JSON.stringify(session.user))
           } else {
-            console.log("No session found, checking sessionStorage")
+            console.log("[AUTH] No session found, checking sessionStorage")
             // Try to restore from sessionStorage
             const storedUser = sessionStorage.getItem("user")
             if (storedUser) {
               try {
                 const parsedUser = JSON.parse(storedUser)
-                console.log("Restored user from sessionStorage:", parsedUser.id)
+                console.log("[AUTH] Restored user from sessionStorage:", parsedUser.id)
                 setUser(parsedUser)
               } catch (e) {
-                console.error("Error parsing stored user:", e)
+                console.error("[AUTH] Error parsing stored user:", e)
                 sessionStorage.removeItem("user")
               }
             }
@@ -75,7 +75,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
           // Set up auth state change listener
           const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-            console.log("Auth state changed:", event, session?.user?.id)
+            console.log("[AUTH] Auth state changed:", event, session?.user?.id, session)
             
             // Wait for initialization to complete
             if (initializationPromise.current) {
@@ -83,12 +83,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             }
 
             if (event === "SIGNED_IN" && session?.user) {
-              console.log("User signed in:", session.user.id)
+              console.log("[AUTH] User signed in:", session.user.id)
               setSession(session)
               setUser(session.user)
               sessionStorage.setItem("user", JSON.stringify(session.user))
             } else if (event === "SIGNED_OUT") {
-              console.log("User signed out")
+              console.log("[AUTH] User signed out")
               setSession(null)
               setUser(null)
               sessionStorage.removeItem("user")
@@ -98,7 +98,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setIsInitialized(true)
           subscription.unsubscribe()
         } catch (error) {
-          console.error("Error initializing auth:", error)
+          console.error("[AUTH] Error initializing auth:", error)
           setSession(null)
           setUser(null)
           sessionStorage.removeItem("user")
@@ -112,10 +112,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     initializeAuth().catch(error => {
-      console.error("Failed to initialize auth:", error)
+      console.error("[AUTH] Failed to initialize auth:", error)
       setIsLoading(false)
     })
   }, [])
+
+  useEffect(() => {
+    console.log("[AUTH] AuthContext state:", { user, session, isLoading })
+  }, [user, session, isLoading])
 
   const value = {
     user,
