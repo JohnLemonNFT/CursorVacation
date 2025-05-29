@@ -321,13 +321,24 @@ export default function TripDetail() {
 
   // Retry fetching if we haven't reached max attempts
   useEffect(() => {
-    if (error && fetchAttempts < maxFetchAttempts && user && !isManuallyRefreshing) {
+    if (
+      error &&
+      fetchAttempts < maxFetchAttempts &&
+      user &&
+      !isManuallyRefreshing
+    ) {
+      console.warn(
+        `Retrying fetch (${fetchAttempts + 1}/${maxFetchAttempts}) due to error:`,
+        error
+      )
       const timer = setTimeout(() => {
-        console.log(`Retry attempt ${fetchAttempts + 1} of ${maxFetchAttempts}`)
         loadTripData(true)
-      }, 2000) // Increased from 1 second to 2 seconds
-
+      }, 2000)
       return () => clearTimeout(timer)
+    }
+    if (error && fetchAttempts >= maxFetchAttempts) {
+      console.error("Max fetch attempts reached. Stopping retries.", error)
+      // Optionally, show a toast or set a special error state here
     }
   }, [error, fetchAttempts, user, isManuallyRefreshing])
 
@@ -404,11 +415,11 @@ export default function TripDetail() {
     setError("")
     lastVisibilityChange.current = Date.now()
 
-    // Check connection first
     checkConnection(true).then((status) => {
-      setConnectionStatus(status)
+      const typedStatus = status as ConnectionState
+      setConnectionStatus(typedStatus)
 
-      if (status.status === "connected") {
+      if (typedStatus.status === "connected") {
         loadTripData(true)
       } else {
         attemptReconnect().then((reconnected) => {
@@ -418,7 +429,7 @@ export default function TripDetail() {
             setIsManuallyRefreshing(false)
             toast({
               title: "Connection Error",
-              description: status.error || "Could not connect to the server. Please check your internet connection.",
+              description: typedStatus.error || "Could not connect to the server. Please check your internet connection.",
               variant: "destructive",
             })
           }
@@ -460,23 +471,34 @@ export default function TripDetail() {
         }, 5000) // 5 second timeout
       })
 
-      const result = await Promise.race([fetchPromise, timeoutPromise])
+      const result = (await Promise.race([fetchPromise, timeoutPromise])) as {
+        trip: Trip
+        members: TripMember[]
+        fromCache?: boolean
+        offline?: boolean
+      }
 
       // Only update state if the fetch was successful
-      if (result && result.trip && result.members) {
+      if (
+        result &&
+        typeof result === "object" &&
+        "trip" in result &&
+        "members" in result
+      ) {
         setTrip(result.trip)
         setMembers(result.members)
         setDataSource(result.fromCache ? "cache" : "network")
-        setIsOffline(result.offline)
+        setIsOffline(result.offline || false)
         setIsUserMember(true)
         setError("")
+        setFetchAttempts(0) // Only reset here!
+        console.log("Trip data loaded successfully. Resetting fetchAttempts.")
       } else {
         throw new Error("Invalid response format")
       }
 
       setIsLoadingTrip(false)
       setIsManuallyRefreshing(false)
-      setFetchAttempts(0)
     } catch (error) {
       console.error("Error in loadTripData:", error)
 
@@ -817,7 +839,7 @@ export default function TripDetail() {
                 onClick={() => setActiveTab(tab.id)}
               >
                 <div className="flex items-center">
-                  {React.cloneElement(tab.icon as React.ReactElement, { className: "h-4 w-4 mr-2" })}
+                  {React.cloneElement(tab.icon as React.ReactElement<any, any>, { className: "h-4 w-4 mr-2" })}
                   {tab.label}
                 </div>
               </Button>
@@ -1189,7 +1211,7 @@ export default function TripDetail() {
                   : "text-gray-500 hover:text-vault-purple hover:bg-vault-purple/5",
               )}
             >
-              {React.cloneElement(tab.icon as React.ReactElement, {
+              {React.cloneElement(tab.icon as React.ReactElement<any, any>, {
                 className: cn("h-6 w-6 mb-1", activeTab === tab.id ? "text-vault-purple" : "text-gray-500"),
               })}
               <span className="text-xs font-medium">{tab.label}</span>

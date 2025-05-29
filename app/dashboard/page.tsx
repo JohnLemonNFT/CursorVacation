@@ -185,6 +185,11 @@ export default function Dashboard() {
   const fetchTrips = useCallback(
     async (force = false) => {
       if (!user || (hasFetchedTrips.current && !force)) return
+      if (fetchAttempts >= maxFetchAttempts) {
+        console.error("Max fetch attempts reached. Stopping retries.")
+        setDataError("Unable to load trips after several attempts. Please check your connection and try again later.")
+        return
+      }
 
       // Clear any existing retry timeouts
       if (retryTimeoutRef.current) {
@@ -420,6 +425,9 @@ export default function Dashboard() {
             console.log(`Executing retry attempt ${fetchAttempts + 1}`)
             fetchTrips(true)
           }, backoffTime)
+        } else if (fetchAttempts >= maxFetchAttempts) {
+          console.error("Max fetch attempts reached. Stopping retries.")
+          setDataError("Unable to load trips after several attempts. Please check your connection and try again later.")
         }
       } finally {
         setIsLoadingTrips(false)
@@ -689,6 +697,22 @@ export default function Dashboard() {
             </Link>
           </CardFooter>
         </Card>
+      </div>
+    )
+  }
+
+  if (dataError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-vault-purple/10 via-vault-pink/10 to-vault-yellow/10">
+        <div className="text-center">
+          <div className="animate-bounce mb-4">
+            <Plane className="h-12 w-12 text-vault-purple mx-auto" />
+          </div>
+          <div className="text-red-600 font-bold text-xl mb-2">{dataError}</div>
+          <Button onClick={() => { setFetchAttempts(0); setDataError(null); fetchTrips(true); }}>
+            Retry
+          </Button>
+        </div>
       </div>
     )
   }
