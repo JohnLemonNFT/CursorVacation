@@ -24,7 +24,7 @@ import { supabase, handleSupabaseError } from "@/lib/supabase"
 import { formatDistanceToNow, differenceInDays } from "date-fns"
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt"
 import { useToast } from "@/components/ui/use-toast"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { checkConnection, attemptReconnect, type ConnectionState } from "@/lib/data-manager"
@@ -56,6 +56,7 @@ export default function Dashboard() {
   const [dataError, setDataError] = useState<string | null>(null)
   const { toast } = useToast()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const hasCheckedInvite = useRef(false)
   const hasFetchedTrips = useRef(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
@@ -725,6 +726,13 @@ export default function Dashboard() {
       return () => clearInterval(interval)
     }
   }, [user, isLoading])
+
+  // Force full reload if redirected from OAuth and user is not ready
+  useEffect(() => {
+    if (searchParams?.get("refresh") && !user && !isLoading) {
+      window.location.reload()
+    }
+  }, [searchParams, user, isLoading])
 
   if (isLoading || isLoadingProfile || (!user && !isLoading)) {
     return (
