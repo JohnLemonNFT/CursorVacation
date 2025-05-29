@@ -1,6 +1,7 @@
 "use client"
 
 import { CardFooter } from "@/components/ui/card"
+import { Suspense } from "react"
 
 import { useState, useEffect } from "react"
 import { useAuth } from "@/lib/auth-context"
@@ -11,7 +12,15 @@ import { FcGoogle } from "react-icons/fc"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useToast } from "@/components/ui/use-toast"
 
-export default function SignIn() {
+export default function SignInPageWrapper() {
+  return (
+    <Suspense fallback={null}>
+      <SignIn />
+    </Suspense>
+  )
+}
+
+function SignIn() {
   const { user, signInWithGoogle, isLoading: authLoading } = useAuth()
   const [isSigningIn, setIsSigningIn] = useState(false)
   const [error, setError] = useState<string | null>(null)
