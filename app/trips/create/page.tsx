@@ -123,7 +123,7 @@ export default function CreateTrip() {
       }
 
       // Redirect to trip page
-      router.push(`/trips/${trip.id}`)
+      router.push(`/trips/${trip.id}?tab=travel`)
     } catch (error) {
       console.error("Error in handleCreateTrip:", error)
       setError("An unexpected error occurred. Please try again.")

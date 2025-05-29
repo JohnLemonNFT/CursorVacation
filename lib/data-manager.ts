@@ -153,6 +153,12 @@ export async function fetchTripDetails(tripId: string, userId: string, force = f
       online: navigator.onLine
     })
 
+    // Validate inputs
+    if (!tripId || !userId) {
+      console.error("Missing required parameters:", { tripId, userId })
+      throw new Error("Missing required parameters")
+    }
+
     // Try to get from cache first if not forcing refresh
     if (!force) {
       try {

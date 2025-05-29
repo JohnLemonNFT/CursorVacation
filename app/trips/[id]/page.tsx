@@ -439,7 +439,10 @@ export default function TripDetail() {
   }
 
   const loadTripData = async (force = false) => {
-    if (!user || !tripId) return
+    if (!user || !tripId) {
+      console.log("Waiting for user or tripId:", { user: !!user, tripId: !!tripId })
+      return
+    }
 
     // Clear any existing fetch timeout
     if (fetchTimeoutRef.current) {
@@ -460,6 +463,12 @@ export default function TripDetail() {
       lastFetchTime.current = now
       setFetchAttempts((prev) => prev + 1)
       setLoadingStartTime(Date.now())
+
+      // Ensure we have a valid user ID before proceeding
+      if (!user.id) {
+        console.error("No user ID available")
+        throw new Error("Authentication required")
+      }
 
       console.log("Fetching trip details:", tripId)
 
@@ -503,7 +512,7 @@ export default function TripDetail() {
       console.error("Error in loadTripData:", error)
 
       if (error instanceof Error) {
-        if (error.message === "AUTH_ERROR") {
+        if (error.message === "AUTH_ERROR" || error.message === "Authentication required") {
           console.log("Auth error detected, redirecting to sign in")
           router.push("/auth/signin")
           return

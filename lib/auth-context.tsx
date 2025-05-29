@@ -4,7 +4,7 @@ import type React from "react"
 
 import { createContext, useContext, useEffect, useState, useRef } from "react"
 import { supabase } from "@/lib/supabase"
-import type { User, Session } from "@supabase/supabase-js"
+import type { User, Session, Provider } from "@supabase/supabase-js"
 import { usePathname, useRouter } from "next/navigation"
 import { safeSessionStorage } from "@/lib/safe-storage"
 
@@ -12,7 +12,7 @@ type AuthContextType = {
   user: User | null
   session: Session | null
   isLoading: boolean
-  signInWithGoogle: () => Promise<void>
+  signInWithGoogle: () => Promise<{ provider: Provider; url: string }>
   signOut: () => Promise<void>
 }
 
@@ -29,6 +29,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isInitialized = useRef(false)
   const authChangeCount = useRef(0)
   const lastAuthEvent = useRef<string | null>(null)
+  const initializationPromise = useRef<Promise<void> | null>(null)
 
   useEffect(() => {
     const setupAuth = async () => {
@@ -38,27 +39,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log("Setting up auth...")
 
       try {
-        // Get initial session
-        const { data } = await supabase.auth.getSession()
+        // Create a promise to track initialization
+        initializationPromise.current = (async () => {
+          // Get initial session
+          const { data } = await supabase.auth.getSession()
 
-        if (data.session) {
-          console.log("Initial session found for:", data.session.user.email)
-          setSession(data.session)
-          setUser(data.session.user)
+          if (data.session) {
+            console.log("Initial session found for:", data.session.user.email)
+            setSession(data.session)
+            setUser(data.session.user)
 
-          // Store auth in sessionStorage to persist across tab switches
-          safeSessionStorage.setItem("authUser", JSON.stringify(data.session.user))
-        } else {
-          console.log("No initial session found")
-          setSession(null)
-          setUser(null)
-        }
+            // Store auth in sessionStorage to persist across tab switches
+            safeSessionStorage.setItem("authUser", JSON.stringify(data.session.user))
+          } else {
+            console.log("No initial session found")
+            setSession(null)
+            setUser(null)
+          }
+        })()
+
+        await initializationPromise.current
       } catch (error) {
         console.error("Error getting initial session:", error)
+      } finally {
+        isInitialized.current = true
+        setIsLoading(false)
       }
-
-      isInitialized.current = true
-      setIsLoading(false)
     }
 
     // Try to restore user from sessionStorage first (for quick tab switching)
@@ -77,6 +83,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Set up auth state change listener
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, newSession) => {
+      // Wait for initialization to complete before processing auth changes
+      if (initializationPromise.current) {
+        await initializationPromise.current
+      }
+
       authChangeCount.current += 1
       const count = authChangeCount.current
 
