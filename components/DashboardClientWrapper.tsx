@@ -159,11 +159,11 @@ export default function DashboardClientWrapper() {
           .single()
 
         if (error && error.code === "PGRST116") {
-          // No profile found, create one using RPC to bypass RLS
+          // No profile found, create one without Google avatar
           const { error: insertError } = await supabase.rpc('create_profile', {
             profile_id: user.id,
             profile_full_name: user.user_metadata?.full_name || user.email || "",
-            profile_avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || null,
+            profile_avatar_url: null,
             profile_email: user.email
           })
 
@@ -845,17 +845,9 @@ export default function DashboardClientWrapper() {
                   size="sm"
                   className="rounded-full flex items-center gap-2 hover:scale-105 transition-transform"
                 >
-                  {profile?.avatar_url ? (
-                    <img
-                      src={profile.avatar_url || "/placeholder.svg"}
-                      alt={profile.full_name || "User"}
-                      className="w-8 h-8 rounded-full ring-2 ring-vault-purple/20"
-                    />
-                  ) : (
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-r from-vault-purple to-vault-pink flex items-center justify-center text-white text-sm font-bold">
-                      {profile?.full_name?.[0] || user.email?.[0]?.toUpperCase() || "U"}
-                    </div>
-                  )}
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-vault-purple to-vault-pink flex items-center justify-center text-white text-sm font-bold">
+                    {profile?.full_name?.[0] || user.email?.[0]?.toUpperCase() || "U"}
+                  </div>
                   <span className="hidden sm:inline font-medium">{profile?.full_name || user.email}</span>
                 </Button>
               </Link>

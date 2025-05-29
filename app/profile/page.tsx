@@ -49,11 +49,11 @@ export default function ProfilePage() {
           .single()
 
         if (error && error.code === "PGRST116") {
-          // No profile found, create one
+          // No profile found, create one without Google avatar
           const { error: insertError } = await supabase.from("profiles").insert({
             id: user.id,
             full_name: user.user_metadata?.full_name || user.email || "",
-            avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || null,
+            avatar_url: null,
             email: user.email,
           })
           if (insertError) {
@@ -345,9 +345,9 @@ export default function ProfilePage() {
                     className="w-full h-full rounded-full overflow-hidden bg-white dark:bg-gray-800 flex items-center justify-center cursor-pointer"
                     onClick={openPhotoOptions}
                   >
-                    {displayAvatarUrl ? (
+                    {avatarPreview ? (
                       <img
-                        src={displayAvatarUrl || "/placeholder.svg"}
+                        src={avatarPreview}
                         alt={formData.fullName || "User"}
                         className="w-full h-full object-cover"
                       />
@@ -440,25 +440,6 @@ export default function ProfilePage() {
                 className="h-10 text-base border focus:border-vault-purple transition-colors"
               />
               <p className="text-xs text-gray-500">This is how your family will see you</p>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="avatarUrl" className="text-sm font-medium flex items-center gap-2">
-                <Camera className="h-4 w-4 text-vault-pink" />
-                Avatar URL
-                <Badge variant="outline" className="ml-1 text-xs py-0">
-                  Optional
-                </Badge>
-              </Label>
-              <Input
-                id="avatarUrl"
-                name="avatarUrl"
-                placeholder="https://example.com/your-photo.jpg"
-                value={formData.avatarUrl}
-                onChange={handleInputChange}
-                className="h-10 text-sm border focus:border-vault-pink transition-colors"
-              />
-              <p className="text-xs text-gray-500">Upload a photo or paste a URL (uploaded photos look better!)</p>
             </div>
 
             <div className="pt-2">

@@ -49,7 +49,6 @@ export function TripTravelInfo({
 }: TripTravelInfoProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
-  const [members, setMembers] = useState<TripMember[]>(initialMembers)
   const { toast } = useToast()
 
   const [travelInfo, setTravelInfo] = useState({
@@ -61,7 +60,7 @@ export function TripTravelInfo({
     flight_details: "",
   })
 
-  const currentUserMember = members.find((member) => member.user_id === userId)
+  const currentUserMember = initialMembers.find((member) => member.user_id === userId)
 
   useEffect(() => {
     // Set up real-time subscription for trip members
@@ -100,7 +99,12 @@ export function TripTravelInfo({
             return
           }
 
-          setMembers(updatedMembers || [])
+          // When setting members, ensure profile is always an object, not an array
+          const normalizedMembers = updatedMembers.map((member) => ({
+            ...member,
+            profile: Array.isArray(member.profile) ? member.profile[0] || null : member.profile,
+          }))
+          setMembers(normalizedMembers)
         },
       )
       .subscribe()
@@ -176,7 +180,7 @@ export function TripTravelInfo({
       })
 
       // Update local state immediately
-      const updatedMembers = members.map((member) => {
+      const updatedMembers = initialMembers.map((member) => {
         if (member.user_id === userId) {
           return {
             ...member,
@@ -191,7 +195,12 @@ export function TripTravelInfo({
         return member
       })
 
-      setMembers(updatedMembers)
+      // When setting members, ensure profile is always an object, not an array
+      const normalizedMembers = updatedMembers.map((member) => ({
+        ...member,
+        profile: Array.isArray(member.profile) ? member.profile[0] || null : member.profile,
+      }))
+      setMembers(normalizedMembers)
       setIsEditing(false)
     } catch (error) {
       console.error("Error in handleSave:", error)
@@ -239,6 +248,13 @@ export function TripTravelInfo({
       return time
     }
   }
+
+  // Normalize initialMembers so profile is always an object
+  const normalizeMembers = (members: any[]) => members.map((member) => ({
+    ...member,
+    profile: Array.isArray(member.profile) ? member.profile[0] || null : member.profile,
+  }))
+  const [members, setMembers] = useState(() => normalizeMembers(initialMembers))
 
   return (
     <div className="space-y-6">
@@ -375,29 +391,14 @@ export function TripTravelInfo({
 
       <div className="grid grid-cols-1 gap-4">
         {members.map((member, index) => {
-          let profile = null;
-          if (member.profile) {
-            if (Array.isArray(member.profile)) {
-              profile = member.profile[0] || null;
-            } else {
-              profile = member.profile;
-            }
-          }
+          const profile = member.profile;
           return (
             <Card key={member.id} className="animate-fade-in" style={{ animationDelay: `${index * 0.05}s` }}>
               <CardHeader className="pb-2">
                 <div className="flex items-center gap-3">
-                  {profile && profile.avatar_url ? (
-                    <img
-                      src={profile.avatar_url || "/placeholder.svg"}
-                      alt={profile.full_name || "User"}
-                      className="w-12 h-12 rounded-full"
-                    />
-                  ) : (
-                    <div className="w-12 h-12 rounded-full bg-vault-purple flex items-center justify-center text-white font-bold">
-                      {profile?.full_name?.[0] || "U"}
-                    </div>
-                  )}
+                  <div className="w-12 h-12 rounded-full bg-vault-purple flex items-center justify-center text-white font-bold">
+                    {profile?.full_name?.[0] || "U"}
+                  </div>
                   <div>
                     <div className="flex items-center gap-2">
                       <CardTitle className="text-lg">
