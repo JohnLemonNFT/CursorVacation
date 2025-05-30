@@ -326,7 +326,8 @@ export async function fetchTripDetails(tripId: string, userId: string, force = f
       }
     }
 
-    // Ensure the trip admin is always included in the members array
+    // Ensure the trip admin is always included in the members array (but only if not already present)
+    // This is a double-check, but will not add a duplicate
     if (tripData.created_by && !allMembers.some(m => m.user_id === tripData.created_by)) {
       console.log("👤 Fetching trip admin's profile")
       const { data: adminProfile, error: adminError } = await supabase
