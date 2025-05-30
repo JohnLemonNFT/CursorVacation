@@ -334,6 +334,7 @@ export function TripExplore({ tripId, destination, startDate, endDate, isAdmin, 
         description: item.description,
         is_completed: false,
         explore_item_id: item.id,
+        category: item.category || "Other",
       }
 
       // Add to wishlist with explore_item_id
