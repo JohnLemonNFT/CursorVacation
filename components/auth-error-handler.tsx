@@ -47,27 +47,6 @@ export function AuthErrorHandler() {
 
     window.addEventListener("unhandledrejection", handleRejection)
 
-    // Show a toast message once to explain the errors
-    const hasShownStorageMessage = sessionStorage.getItem("hasShownStorageMessage")
-    if (!hasShownStorageMessage) {
-      try {
-        sessionStorage.setItem("hasShownStorageMessage", "true")
-      } catch (e) {
-        // Ignore storage errors
-      }
-
-      // Show the toast after a short delay
-      const timer = setTimeout(() => {
-        toast({
-          title: "Browser Privacy Notice",
-          description: "Some console errors about 'storage access' are normal and won't affect functionality.",
-          duration: 8000,
-        })
-      }, 2000)
-
-      return () => clearTimeout(timer)
-    }
-
     return () => {
       window.removeEventListener("error", handleStorageError)
       window.removeEventListener("unhandledrejection", handleRejection)
