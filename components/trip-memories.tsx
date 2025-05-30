@@ -264,10 +264,8 @@ export function TripMemories({ tripId, userId, startDate, endDate }: TripMemorie
   const allDays = eachDayOfInterval({ start: startDate, end: endDate })
 
   return (
-    <div className="space-y-6 relative">
-      {/* Removed the Memory Streak component */}
-
-      {/* Memory Reminder - keep this as it's useful */}
+    <div className="space-y-6 relative pb-20">
+      {/* Memory Reminder */}
       <MemoryReminder tripId={tripId} userId={userId} startDate={startDate} endDate={endDate} isActive={true} />
 
       {/* Heart animation */}
@@ -277,7 +275,16 @@ export function TripMemories({ tripId, userId, startDate, endDate }: TripMemorie
         </div>
       )}
 
-      <div className="flex justify-between items-center">
+      {/* Floating Action Button for Mobile */}
+      <Button
+        className="fixed bottom-6 right-6 z-50 rounded-full w-14 h-14 shadow-lg bg-gradient-to-r from-vault-purple to-vault-purple/90 hover:opacity-90 transition-all duration-300 transform hover:scale-105 md:hidden"
+        onClick={() => setShowAddForm(true)}
+      >
+        <Plus className="h-6 w-6" />
+      </Button>
+
+      {/* Desktop Header */}
+      <div className="hidden md:flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-vault-purple to-vault-orange">
             Memories
@@ -295,14 +302,35 @@ export function TripMemories({ tripId, userId, startDate, endDate }: TripMemorie
         </Button>
       </div>
 
+      {/* Mobile Header */}
+      <div className="md:hidden">
+        <h2 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-vault-purple to-vault-orange">
+          Memories
+        </h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400 italic">
+          Capture the moments that make this trip special
+        </p>
+      </div>
+
+      {/* Add Memory Form */}
       {showAddForm && (
-        <Card className="animate-slide-down border border-white/40 shadow-lg overflow-hidden relative">
+        <Card className="animate-slide-down border border-white/40 shadow-lg overflow-hidden relative fixed inset-0 z-50 md:relative md:inset-auto">
           <div className="absolute inset-0 bg-gradient-to-br from-vault-purple/5 via-white/5 to-vault-orange/5 opacity-50"></div>
           <CardHeader className="relative z-10">
-            <CardTitle className="flex items-center">
-              <Camera className="h-5 w-5 mr-2 text-vault-orange" />
-              Post a Memory
-            </CardTitle>
+            <div className="flex justify-between items-center">
+              <CardTitle className="flex items-center">
+                <Camera className="h-5 w-5 mr-2 text-vault-orange" />
+                Post a Memory
+              </CardTitle>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowAddForm(false)}
+                className="md:hidden"
+              >
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
             <CardDescription>Share a special moment from your trip</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 relative z-10">
@@ -452,6 +480,7 @@ export function TripMemories({ tripId, userId, startDate, endDate }: TripMemorie
         </Card>
       )}
 
+      {/* Memories Timeline */}
       {isLoading ? (
         <div className="space-y-8">
           {[1, 2].map((i) => (
@@ -498,10 +527,13 @@ export function TripMemories({ tripId, userId, startDate, endDate }: TripMemorie
             .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
             .map((date, dateIndex) => (
               <div key={date} className="animate-fade-in" style={{ animationDelay: `${dateIndex * 0.1}s` }}>
-                <h3 className="text-xl font-semibold mb-4 flex items-center bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm p-2 rounded-lg shadow-sm">
-                  <Calendar className="h-5 w-5 mr-2 text-vault-orange" />
-                  {format(new Date(date), "EEEE, MMMM d, yyyy")}
-                </h3>
+                {/* Sticky Date Header */}
+                <div className="sticky top-0 z-10 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm p-2 rounded-lg shadow-sm mb-4">
+                  <h3 className="text-lg font-semibold flex items-center">
+                    <Calendar className="h-5 w-5 mr-2 text-vault-orange" />
+                    {format(new Date(date), "EEEE, MMMM d, yyyy")}
+                  </h3>
+                </div>
                 <div className="grid grid-cols-1 gap-4">
                   {groupedMemories[date].map((memory, memoryIndex) => (
                     <Card
@@ -544,7 +576,7 @@ export function TripMemories({ tripId, userId, startDate, endDate }: TripMemorie
                       <CardContent className="relative z-10">
                         <p className="whitespace-pre-line mb-4">{memory.content}</p>
                         {memory.media_urls && memory.media_urls.length > 0 && (
-                          <div className="grid grid-cols-2 gap-2 mt-4">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-4">
                             {memory.media_urls.map((url, i) => (
                               <div
                                 key={i}
@@ -556,6 +588,7 @@ export function TripMemories({ tripId, userId, startDate, endDate }: TripMemorie
                                     src={url || "/placeholder.svg"}
                                     alt={`Memory ${i}`}
                                     className="w-full h-auto rounded-sm shadow-md"
+                                    loading="lazy"
                                   />
                                 </div>
                               </div>
