@@ -69,8 +69,6 @@ export function TripExplore({ tripId, destination, startDate, endDate, isAdmin, 
   })
   const [responses, setResponses] = useState<{ [suggestionId: string]: 'yes' | 'no' }>({})
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [dragStartX, setDragStartX] = useState<number | null>(null)
-  const [dragDeltaX, setDragDeltaX] = useState(0)
 
   useEffect(() => {
     const fetchExploreItems = async () => {
@@ -369,27 +367,6 @@ export function TripExplore({ tripId, destination, startDate, endDate, isAdmin, 
     }
   }
 
-  // Custom swipe handlers
-  const handlePointerDown = (e: React.PointerEvent) => {
-    setDragStartX(e.clientX)
-  }
-  const handlePointerMove = (e: React.PointerEvent) => {
-    if (dragStartX !== null) {
-      setDragDeltaX(e.clientX - dragStartX)
-    }
-  }
-  const handlePointerUp = () => {
-    if (dragStartX !== null) {
-      if (dragDeltaX > 80 && currentSuggestion) {
-        handleRespond(currentSuggestion, 'yes')
-      } else if (dragDeltaX < -80 && currentSuggestion) {
-        handleRespond(currentSuggestion, 'no')
-      }
-    }
-    setDragStartX(null)
-    setDragDeltaX(0)
-  }
-
   return (
     <div className="pb-20">
       <div className="bg-white dark:bg-gray-900 rounded-lg p-6 mb-6 shadow-sm">
@@ -509,14 +486,7 @@ export function TripExplore({ tripId, destination, startDate, endDate, isAdmin, 
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center min-h-[400px]">
-          <div
-            className="w-full max-w-lg select-none"
-            style={{ transform: `translateX(${dragDeltaX}px)`, transition: dragStartX ? 'none' : 'transform 0.2s' }}
-            onPointerDown={handlePointerDown}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
-            onPointerLeave={handlePointerUp}
-          >
+          <div className="w-full max-w-lg">
             <Card className="overflow-hidden rounded-2xl shadow-xl border border-gray-200 animate-fade-in bg-white dark:bg-gray-900">
               <CardContent className="p-8 flex flex-col items-center">
                 <div className="flex items-center gap-2 mb-3">
@@ -543,9 +513,6 @@ export function TripExplore({ tripId, destination, startDate, endDate, isAdmin, 
                   >
                     No, Skip
                   </Button>
-                </div>
-                <div className="mt-6 text-xs text-gray-400 text-center">
-                  Swipe right for Yes, left for No
                 </div>
               </CardContent>
             </Card>
