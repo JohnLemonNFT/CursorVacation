@@ -375,98 +375,100 @@ export function TripExplore({ tripId, destination, startDate, endDate, isAdmin, 
           Handpicked suggestions by your trip planner.
         </p>
 
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button
-              className="w-full bg-vault-purple hover:bg-vault-purple/90 flex items-center justify-center gap-2 text-white"
-              onClick={() => {
-                setNewItem({
-                  title: "",
-                  description: "",
-                  date: "",
-                  url: "",
-                  image_url: "",
-                })
-              }}
-            >
-              <Plus className="h-5 w-5" />
-              Add Suggestion
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 text-vault-purple">
-                <Plus className="h-6 w-6" />
-                Add Custom Suggestion
-              </DialogTitle>
-              <DialogDescription>
-                Add your own discovery or idea to the trip's "Explore" section for the family.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-6 py-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Suggestion Name</label>
-                <Input
-                  name="title"
-                  placeholder="E.g., Secret Waterfall Hike, Best Pizza Place"
-                  value={newItem.title}
-                  onChange={handleInputChange}
-                  className="rounded-xl"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
-                <Textarea
-                  name="description"
-                  placeholder="Tell everyone why this is a great idea..."
-                  value={newItem.description}
-                  onChange={handleInputChange}
-                  className="rounded-xl"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Date (Optional)</label>
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+        {isAdmin && (
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button
+                className="w-full bg-vault-purple hover:bg-vault-purple/90 flex items-center justify-center gap-2 text-white"
+                onClick={() => {
+                  setNewItem({
+                    title: "",
+                    description: "",
+                    date: "",
+                    url: "",
+                    image_url: "",
+                  })
+                }}
+              >
+                <Plus className="h-5 w-5" />
+                Add Suggestion
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2 text-vault-purple">
+                  <Plus className="h-6 w-6" />
+                  Add Custom Suggestion
+                </DialogTitle>
+                <DialogDescription>
+                  Add your own discovery or idea to the trip's "Explore" section for the family.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-6 py-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Suggestion Name</label>
                   <Input
-                    name="date"
-                    type="date"
-                    placeholder="Pick a date"
-                    value={newItem.date}
+                    name="title"
+                    placeholder="E.g., Secret Waterfall Hike, Best Pizza Place"
+                    value={newItem.title}
                     onChange={handleInputChange}
-                    min={format(startDate, "yyyy-MM-dd")}
-                    max={format(endDate, "yyyy-MM-dd")}
-                    className="pl-10 rounded-xl"
+                    className="rounded-xl"
                   />
                 </div>
-              </div>
 
-              <div className="flex flex-col gap-3 mt-6">
-                <DialogClose asChild>
-                  <Button variant="outline" className="rounded-xl">
-                    Cancel
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
+                  <Textarea
+                    name="description"
+                    placeholder="Tell everyone why this is a great idea..."
+                    value={newItem.description}
+                    onChange={handleInputChange}
+                    className="rounded-xl"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Date (Optional)</label>
+                  <div className="relative">
+                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <Input
+                      name="date"
+                      type="date"
+                      placeholder="Pick a date"
+                      value={newItem.date}
+                      onChange={handleInputChange}
+                      min={format(startDate, "yyyy-MM-dd")}
+                      max={format(endDate, "yyyy-MM-dd")}
+                      className="pl-10 rounded-xl"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-3 mt-6">
+                  <DialogClose asChild>
+                    <Button variant="outline" className="rounded-xl">
+                      Cancel
+                    </Button>
+                  </DialogClose>
+                  <Button
+                    className="bg-teal-500 hover:bg-teal-600 rounded-xl flex items-center justify-center gap-2 text-white"
+                    onClick={handleAddItem}
+                    disabled={!newItem.title.trim() || !newItem.description.trim() || isAddingItem}
+                  >
+                    {isAddingItem ? (
+                      "Adding..."
+                    ) : (
+                      <>
+                        <Plus className="h-5 w-5" />
+                        Add Suggestion
+                      </>
+                    )}
                   </Button>
-                </DialogClose>
-                <Button
-                  className="bg-teal-500 hover:bg-teal-600 rounded-xl flex items-center justify-center gap-2 text-white"
-                  onClick={handleAddItem}
-                  disabled={!newItem.title.trim() || !newItem.description.trim() || isAddingItem}
-                >
-                  {isAddingItem ? (
-                    "Adding..."
-                  ) : (
-                    <>
-                      <Plus className="h-5 w-5" />
-                      Add Suggestion
-                    </>
-                  )}
-                </Button>
+                </div>
               </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
 
       {isLoading ? (
