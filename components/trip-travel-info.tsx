@@ -256,6 +256,14 @@ export function TripTravelInfo({
   }))
   const [members, setMembers] = useState(() => normalizeMembers(initialMembers))
 
+  // Debug: Log members and profiles
+  useEffect(() => {
+    console.log("TripTravelInfo members:", members)
+    members.forEach((member, idx) => {
+      console.log(`Member #${idx} profile:`, member.profile)
+    })
+  }, [members])
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
