@@ -573,23 +573,44 @@ export function TripMemories({ tripId, userId, startDate, endDate }: TripMemorie
                       <CardContent className="relative z-10">
                         <p className="whitespace-pre-line mb-4">{memory.content}</p>
                         {memory.media_urls && memory.media_urls.length > 0 && (
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-4">
-                            {memory.media_urls.map((url, i) => (
-                              <div
-                                key={i}
-                                className="polaroid transform transition-all duration-300 hover:rotate-1 hover:scale-105"
-                              >
-                                <div className="relative">
-                                  <div className="tape tape-top-right"></div>
+                          <div className="relative mt-4">
+                            {/* Carousel container */}
+                            <div
+                              className="flex overflow-x-auto gap-2 snap-x snap-mandatory rounded-md"
+                              style={{ scrollSnapType: 'x mandatory' }}
+                            >
+                              {memory.media_urls.map((url, i) => (
+                                <div
+                                  key={i}
+                                  className="flex-shrink-0 w-64 h-64 sm:w-80 sm:h-80 snap-center relative bg-white/80 dark:bg-gray-800/80 rounded-md shadow-md overflow-hidden"
+                                >
                                   <img
                                     src={url || "/placeholder.svg"}
                                     alt={`Memory ${i}`}
-                                    className="w-full h-auto rounded-sm shadow-md"
+                                    className="w-full h-full object-cover"
                                     loading="lazy"
                                   />
                                 </div>
+                              ))}
+                            </div>
+                            {/* Navigation dots (mobile) */}
+                            {memory.media_urls.length > 1 && (
+                              <div className="flex justify-center mt-2 gap-1 md:hidden">
+                                {memory.media_urls.map((_, i) => (
+                                  <span
+                                    key={i}
+                                    className="inline-block w-2 h-2 rounded-full bg-vault-purple/30"
+                                    style={{ opacity: 0.7 }}
+                                  ></span>
+                                ))}
                               </div>
-                            ))}
+                            )}
+                            {/* Navigation arrows (desktop) */}
+                            {memory.media_urls.length > 1 && (
+                              <div className="hidden md:flex justify-center gap-2 mt-2">
+                                <span className="text-xs text-gray-400">Scroll to view more photos</span>
+                              </div>
+                            )}
                           </div>
                         )}
                       </CardContent>
