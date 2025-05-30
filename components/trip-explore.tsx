@@ -372,7 +372,9 @@ export function TripExplore({ tripId, destination, startDate, endDate, isAdmin, 
       <div className="bg-white dark:bg-gray-900 rounded-lg p-6 mb-6 shadow-sm">
         <h2 className="text-2xl font-bold text-center text-vault-purple mb-2">{destination}</h2>
         <p className="text-center text-gray-600 dark:text-gray-400 mb-4">
-          Handpicked suggestions by your trip planner.
+          {isAdmin
+            ? 'Handpicked suggestions by your trip planner.'
+            : 'These are curated suggestions by your trip admin.'}
         </p>
 
         {isAdmin && (
