@@ -112,6 +112,7 @@ export default function ProfilePage() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0]
+      console.log("Selected file type:", file.type)
 
       // Validate file type
       if (!file.type.startsWith("image/")) {
