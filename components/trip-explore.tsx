@@ -72,6 +72,7 @@ const CATEGORY_CONFIG = {
 }
 
 export function TripExplore({ tripId, destination, startDate, endDate, isAdmin, userId }: TripExploreProps) {
+  console.log('TripExplore isAdmin:', isAdmin)
   const [exploreItems, setExploreItems] = useState<ExploreItem[]>([])
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
