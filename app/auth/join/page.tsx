@@ -113,66 +113,9 @@ export default function JoinTrip() {
     }
   }, [])
 
-  return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-b from-white to-gray-100 dark:from-gray-900 dark:to-gray-800">
-      <Card className="w-full max-w-md animate-fade-in">
-        <CardHeader className="text-center">
-          <div className="w-16 h-16 rounded-full bg-gradient-to-r from-vault-purple to-vault-pink flex items-center justify-center text-white font-bold text-2xl mx-auto mb-4">
-            V
-          </div>
-          <CardTitle className="text-2xl">Join a Family Trip</CardTitle>
-          <CardDescription>Enter your invite code to join a vacation</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="invite-code">Invite Code</Label>
-            <Input
-              id="invite-code"
-              placeholder="Enter invite code"
-              value={inviteCode}
-              onChange={(e) => setInviteCode(e.target.value)}
-            />
-            {error && <p className="text-sm text-red-500">{error}</p>}
-          </div>
+  useEffect(() => {
+    router.push("/")
+  }, [router])
 
-          <Button
-            className="w-full bg-vault-purple hover:bg-vault-purple/90"
-            onClick={handleJoinTrip}
-            disabled={isJoining || isSigningIn}
-          >
-            {isJoining ? "Joining..." : "Join Trip"}
-          </Button>
-
-          {!user && (
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">Or sign in first</span>
-              </div>
-            </div>
-          )}
-
-          {!user && (
-            <Button
-              className="w-full flex items-center justify-center gap-2 bg-white text-gray-800 hover:bg-gray-100 border"
-              onClick={handleSignIn}
-              disabled={isSigningIn}
-            >
-              <FcGoogle className="w-5 h-5" />
-              <span>{isSigningIn ? "Signing in..." : "Sign in with Google"}</span>
-            </Button>
-          )}
-        </CardContent>
-        <CardFooter className="flex justify-center">
-          <Link href="/auth/signin">
-            <Button variant="link" className="text-vault-purple">
-              Create your own trip
-            </Button>
-          </Link>
-        </CardFooter>
-      </Card>
-    </div>
-  )
+  return null
 }
