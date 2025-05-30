@@ -542,7 +542,7 @@ export function TripMemories({ tripId, userId, startDate, endDate }: TripMemorie
                       <CardHeader className="pb-2 relative z-10">
                         <div className="flex justify-between items-start">
                           <div className="flex items-center gap-2">
-                            {memory.profile.avatar_url ? (
+                            {memory.profile && memory.profile.avatar_url ? (
                               <img
                                 src={memory.profile.avatar_url || "/placeholder.svg"}
                                 alt={memory.profile.full_name || "User"}
@@ -550,7 +550,7 @@ export function TripMemories({ tripId, userId, startDate, endDate }: TripMemorie
                               />
                             ) : (
                               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-vault-purple to-vault-orange flex items-center justify-center text-white shadow-md">
-                                {memory.profile.full_name?.[0] || "U"}
+                                {memory.profile && memory.profile.full_name ? memory.profile.full_name[0] : "U"}
                               </div>
                             )}
                             <div>

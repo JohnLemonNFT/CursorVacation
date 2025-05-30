@@ -481,6 +481,18 @@ export function TripWishlist({ tripId, userId }: TripWishlistProps) {
                     />
                     <div>
                       <div className="flex items-center gap-2">
+                        {/* Avatar with null checks */}
+                        {item.profile && item.profile.avatar_url ? (
+                          <img
+                            src={item.profile.avatar_url}
+                            alt={item.profile.full_name || "User"}
+                            className="w-8 h-8 rounded-full border-2 border-white shadow-md"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-vault-purple to-vault-orange flex items-center justify-center text-white shadow-md">
+                            {item.profile && item.profile.full_name ? item.profile.full_name[0] : "U"}
+                          </div>
+                        )}
                         <CardTitle
                           className={cn(
                             "transition-all duration-300",
