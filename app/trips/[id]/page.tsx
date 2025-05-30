@@ -1187,6 +1187,25 @@ export default function TripDetail() {
                   </CardContent>
                 </Card>
               </div>
+
+              {/* Simple Member List */}
+              {activeTab === "overview" && members.length > 0 && (
+                <div className="flex flex-col items-start mt-2 mb-4">
+                  <span className="text-sm text-gray-500 mb-1">Members:</span>
+                  <div className="flex flex-row gap-3 flex-wrap">
+                    {members.map((member) => (
+                      <div key={member.id} className="flex items-center gap-2 bg-white/60 dark:bg-gray-800/60 px-2 py-1 rounded-full shadow-sm">
+                        <div className="w-7 h-7 rounded-full bg-gradient-to-r from-vault-purple to-vault-pink flex items-center justify-center text-white text-xs font-bold">
+                          {member.profile && member.profile.full_name ? member.profile.full_name[0] : "U"}
+                        </div>
+                        <span className="text-xs font-medium text-gray-700 dark:text-gray-200">
+                          {member.profile && member.profile.full_name ? member.profile.full_name : "Unknown"}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </>
           )}
 
