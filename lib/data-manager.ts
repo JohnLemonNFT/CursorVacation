@@ -270,7 +270,7 @@ export async function fetchTripDetails(tripId: string, userId: string, force = f
         arrival_time,
         departure_time,
         travel_method,
-        profile:profiles!inner(full_name, avatar_url, email)
+        profile:profiles(full_name, avatar_url, email)
       `)
       .eq("trip_id", tripId)
 
@@ -279,8 +279,64 @@ export async function fetchTripDetails(tripId: string, userId: string, force = f
       // Don't throw here, just log the error and continue with empty members array
     }
 
+    // Fetch the trip creator's travel details if they are not already in membersData
+    let allMembers = membersData || []
+    if (tripData.created_by && !allMembers.some(m => m.user_id === tripData.created_by)) {
+      console.log("👤 Fetching trip creator's travel details")
+      const { data: creatorData, error: creatorError } = await supabase
+        .from("trip_members")
+        .select(`
+          id,
+          user_id,
+          role,
+          arrival_date,
+          departure_date,
+          flight_details,
+          arrival_time,
+          departure_time,
+          travel_method,
+          profile:profiles(full_name, avatar_url, email)
+        `)
+        .eq("trip_id", tripId)
+        .eq("user_id", tripData.created_by)
+        .single()
+
+      if (creatorError) {
+        console.error("❌ Error fetching creator's travel details:", handleSupabaseError(creatorError, "fetchTripDetails.creator"))
+      } else if (creatorData) {
+        allMembers = [...allMembers, creatorData]
+      }
+    }
+
+    // Ensure the trip admin is always included in the members array
+    if (tripData.created_by && !allMembers.some(m => m.user_id === tripData.created_by)) {
+      console.log("👤 Fetching trip admin's profile")
+      const { data: adminProfile, error: adminError } = await supabase
+        .from("profiles")
+        .select("id, full_name, avatar_url, email")
+        .eq("id", tripData.created_by)
+        .single()
+
+      if (adminError) {
+        console.error("❌ Error fetching admin's profile:", handleSupabaseError(adminError, "fetchTripDetails.admin"))
+      } else if (adminProfile) {
+        allMembers = [...allMembers, {
+          id: "admin",
+          user_id: tripData.created_by,
+          role: "admin",
+          arrival_date: null,
+          departure_date: null,
+          flight_details: null,
+          arrival_time: null,
+          departure_time: null,
+          travel_method: null,
+          profile: [adminProfile as { full_name: string | null; avatar_url: string | null; email: string | null }]
+        }]
+      }
+    }
+
     // Check if current user is a member
-    const isMember = membersData?.some((member: { user_id: string }) => member.user_id === userId) || tripData.created_by === userId
+    const isMember = allMembers.some((member: { user_id: string }) => member.user_id === userId) || tripData.created_by === userId
 
     if (!isMember) {
       console.error("❌ Access denied: User is not a member of this trip")
@@ -291,7 +347,7 @@ export async function fetchTripDetails(tripId: string, userId: string, force = f
     try {
       const cacheData = {
         trip: tripData,
-        members: membersData || [],
+        members: allMembers,
         timestamp: Date.now(),
         version: "1.0"
       }
@@ -306,7 +362,7 @@ export async function fetchTripDetails(tripId: string, userId: string, force = f
 
     return {
       trip: tripData,
-      members: membersData || [],
+      members: allMembers,
       fromCache: false,
       offline: false,
     }
