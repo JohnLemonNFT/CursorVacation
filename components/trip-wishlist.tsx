@@ -174,7 +174,6 @@ export function TripWishlist({ tripId, userId }: TripWishlistProps) {
       const newItem: Partial<WishlistItem> = {
         id: crypto.randomUUID(),
         created_at: new Date().toISOString(),
-        trip_id: tripId,
         created_by: userId,
         title: newItemTitle,
         description: newItemDescription || null,
@@ -202,7 +201,6 @@ export function TripWishlist({ tripId, userId }: TripWishlistProps) {
       const { error, data } = await supabase
         .from("wishlist_items")
         .insert({
-          trip_id: tripId,
           created_by: userId,
           title: newItemTitle,
           description: newItemDescription || null,
@@ -498,12 +496,7 @@ export function TripWishlist({ tripId, userId }: TripWishlistProps) {
                             </span>
                           )}
                         </CardTitle>
-                        {item.explore_item_id && (
-                          <Badge className="bg-vault-yellow text-black">
-                            <Star className="h-3 w-3 mr-1 fill-black" />
-                            Recommended
-                          </Badge>
-                        )}
+                        {/* Hide 'Recommended' badge for items added from Explore */}
                       </div>
                       <CardDescription>
                         Added by {item.profile?.full_name || "Unknown"} •{" "}

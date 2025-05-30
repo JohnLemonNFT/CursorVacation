@@ -508,43 +508,43 @@ export function TripExplore({ tripId, destination, startDate, endDate, isAdmin, 
           <p className="text-gray-600 dark:text-gray-400 mb-4">No more suggestions to review!</p>
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center min-h-[300px]">
+        <div className="flex flex-col items-center justify-center min-h-[400px]">
           <div
-            className="w-full max-w-md select-none"
+            className="w-full max-w-lg select-none"
             style={{ transform: `translateX(${dragDeltaX}px)`, transition: dragStartX ? 'none' : 'transform 0.2s' }}
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
             onPointerLeave={handlePointerUp}
           >
-            <Card className="overflow-hidden rounded-xl shadow-lg border border-gray-200 animate-fade-in">
-              <CardContent className="p-6 flex flex-col items-center">
-                <div className="flex items-center gap-2 mb-2">
-                  <Compass className="h-5 w-5 text-teal-500" />
-                  <h4 className="text-lg font-semibold">{currentSuggestion.title}</h4>
+            <Card className="overflow-hidden rounded-2xl shadow-xl border border-gray-200 animate-fade-in bg-white dark:bg-gray-900">
+              <CardContent className="p-8 flex flex-col items-center">
+                <div className="flex items-center gap-2 mb-3">
+                  <Compass className="h-6 w-6 text-vault-purple" />
+                  <h4 className="text-xl font-bold text-vault-purple">{currentSuggestion.title}</h4>
                 </div>
-                <p className="text-gray-600 dark:text-gray-400 mb-4 text-center">{currentSuggestion.description}</p>
+                <p className="text-gray-700 dark:text-gray-300 mb-6 text-center text-base">{currentSuggestion.description}</p>
                 {currentSuggestion.date && (
-                  <div className="flex items-center text-sm text-gray-500 mb-3">
+                  <div className="flex items-center text-sm text-gray-500 mb-4">
                     <Calendar className="h-4 w-4 mr-1" />
                     {format(new Date(currentSuggestion.date), "MMM d, yyyy")}
                   </div>
                 )}
-                <div className="flex gap-4 mt-6 w-full justify-center">
+                <div className="flex gap-4 mt-8 w-full justify-center">
                   <Button
-                    className="flex-1 bg-green-500 hover:bg-green-600 text-white rounded-full py-3"
+                    className="flex-1 bg-green-500 hover:bg-green-600 text-white rounded-full py-4 text-lg font-semibold shadow-md"
                     onClick={() => handleRespond(currentSuggestion, 'yes')}
                   >
                     Yes, Add to Wishlist
                   </Button>
                   <Button
-                    className="flex-1 bg-red-500 hover:bg-red-600 text-white rounded-full py-3"
+                    className="flex-1 bg-red-500 hover:bg-red-600 text-white rounded-full py-4 text-lg font-semibold shadow-md"
                     onClick={() => handleRespond(currentSuggestion, 'no')}
                   >
                     No, Skip
                   </Button>
                 </div>
-                <div className="mt-4 text-xs text-gray-400 text-center">
+                <div className="mt-6 text-xs text-gray-400 text-center">
                   Swipe right for Yes, left for No
                 </div>
               </CardContent>
