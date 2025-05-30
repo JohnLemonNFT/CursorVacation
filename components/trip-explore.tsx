@@ -489,38 +489,25 @@ export function TripExplore({ tripId, destination, startDate, endDate, isAdmin, 
           <p className="text-gray-600 dark:text-gray-400 mb-4">No more suggestions to review!</p>
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center min-h-[400px]">
-          <div className="w-full max-w-lg">
-            <Card className="overflow-hidden rounded-2xl shadow-xl border border-gray-200 animate-fade-in bg-white dark:bg-gray-900">
-              <CardContent className="p-8 flex flex-col items-center">
-                <div className="flex items-center gap-2 mb-3">
-                  <Compass className="h-6 w-6 text-vault-purple" />
-                  <h4 className="text-xl font-bold text-vault-purple">{currentSuggestion.title}</h4>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+          {exploreItems.map((item) => (
+            <div key={item.id} className="rounded-2xl bg-gradient-to-br from-vault-purple/10 to-vault-orange/10 shadow-xl p-5 flex flex-col items-center justify-between transition-transform hover:scale-105">
+              <div className="flex flex-col items-center w-full">
+                <div className="mb-3 text-4xl">
+                  <span role="img" aria-label="suggestion">🧭</span>
                 </div>
-                <p className="text-gray-700 dark:text-gray-300 mb-6 text-center text-base">{currentSuggestion.description}</p>
-                {currentSuggestion.date && (
-                  <div className="flex items-center text-sm text-gray-500 mb-4">
-                    <Calendar className="h-4 w-4 mr-1" />
-                    {format(new Date(currentSuggestion.date), "MMM d, yyyy")}
-                  </div>
-                )}
-                <div className="flex gap-4 mt-8 w-full justify-center">
-                  <Button
-                    className="flex-1 bg-green-500 hover:bg-green-600 text-white rounded-full py-4 text-lg font-semibold shadow-md"
-                    onClick={() => handleRespond(currentSuggestion, 'yes')}
-                  >
-                    Yes, Add to Wishlist
-                  </Button>
-                  <Button
-                    className="flex-1 bg-red-500 hover:bg-red-600 text-white rounded-full py-4 text-lg font-semibold shadow-md"
-                    onClick={() => handleRespond(currentSuggestion, 'no')}
-                  >
-                    No, Skip
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                <div className="font-bold text-lg text-vault-purple mb-1 text-center">{item.title}</div>
+                {item.description && <div className="text-gray-600 text-center mb-2">{item.description}</div>}
+                <div className="text-xs text-gray-400 mb-2">Curated by your trip planner</div>
+              </div>
+              <button
+                className="mt-2 w-full py-2 rounded-full bg-gradient-to-r from-vault-purple to-vault-orange text-white font-semibold shadow-md hover:opacity-90 transition-all"
+                onClick={() => handleAddToWishlist(item)}
+              >
+                + Add to Wishlist
+              </button>
+            </div>
+          ))}
         </div>
       )}
 
