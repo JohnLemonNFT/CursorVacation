@@ -316,7 +316,7 @@ export function TripMemories({ tripId, userId, startDate, endDate }: TripMemorie
       {showAddForm && (
         <Card className="animate-slide-down border border-white/40 shadow-lg overflow-hidden relative fixed inset-0 z-50 md:relative md:inset-auto">
           <div className="absolute inset-0 bg-gradient-to-br from-vault-purple/5 via-white/5 to-vault-orange/5 opacity-50"></div>
-          <CardHeader className="relative z-10">
+          <CardHeader className="relative z-10 pt-[env(safe-area-inset-top)]">
             <div className="flex justify-between items-center">
               <CardTitle className="flex items-center">
                 <Camera className="h-5 w-5 mr-2 text-vault-orange" />
