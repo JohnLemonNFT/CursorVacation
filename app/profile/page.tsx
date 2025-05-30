@@ -94,6 +94,16 @@ export default function ProfilePage() {
     }
   }, [user])
 
+  useEffect(() => {
+    if (profile?.avatar_url) {
+      const img = new Image();
+      img.src = profile.avatar_url;
+      img.onload = () => {
+        setAvatarPreview(profile.avatar_url);
+      };
+    }
+  }, [profile?.avatar_url]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
@@ -152,44 +162,34 @@ export default function ProfilePage() {
   }
 
   const uploadAvatar = async (): Promise<string | null> => {
-    if (!avatarFile || !user) return null
+    if (!avatarFile || !user) return null;
 
     try {
-      setIsUploadingAvatar(true)
+      setIsUploadingAvatar(true);
 
       // Create a unique file name
-      const fileExt = avatarFile.name.split(".").pop()
-      const fileName = `${user.id}/avatar-${Date.now()}.${fileExt}`
-
-      // Upload to Supabase Storage
-      const { data, error } = await supabase.storage.from("avatars").upload(fileName, avatarFile, {
+      const fileExt = avatarFile.name.split(".").pop();
+      const fileName = `${user.id}/avatar-${Date.now()}.${fileExt}`;
+      console.log("Uploading avatar file:", fileName);
+      const { data, error: uploadError } = await supabase.storage.from("avatars").upload(fileName, avatarFile, {
         cacheControl: "3600",
         upsert: true,
-      })
-
-      if (error) {
-        console.error("Error uploading avatar:", error)
-        toast({
-          title: "Upload failed",
-          description: "Failed to upload avatar. Please try again.",
-          variant: "destructive",
-        })
-        return null
+      });
+      if (uploadError) {
+        console.error("Error uploading avatar:", uploadError);
+        return null;
       }
-
-      // Get public URL
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from("avatars").getPublicUrl(fileName)
-
-      return publicUrl
+      const { data: publicUrlData } = supabase.storage.from("avatars").getPublicUrl(fileName);
+      const uploadedUrl = publicUrlData?.publicUrl;
+      console.log("Uploaded avatar public URL:", uploadedUrl);
+      return uploadedUrl || null;
     } catch (error) {
-      console.error("Error in uploadAvatar:", error)
-      return null
+      console.error("Error in uploadAvatar:", error);
+      return null;
     } finally {
-      setIsUploadingAvatar(false)
+      setIsUploadingAvatar(false);
     }
-  }
+  };
 
   const handleSaveProfile = async () => {
     if (!user) return
@@ -208,17 +208,19 @@ export default function ProfilePage() {
         }
       }
 
-      console.log("Updating profile with avatarUrl:", avatarUrl)
-      const { error } = await supabase
+      console.log("Updating profile with payload:", {
+        full_name: formData.fullName,
+        avatar_url: avatarUrl,
+      })
+      const { error: updateError } = await supabase
         .from("profiles")
         .update({
           full_name: formData.fullName,
           avatar_url: avatarUrl,
         })
         .eq("id", user.id)
-
-      if (error) {
-        console.error("Error updating profile:", error)
+      if (updateError) {
+        console.error("Error updating profile:", updateError)
         toast({
           title: "Error",
           description: "Failed to update profile. Please try again.",
@@ -233,6 +235,7 @@ export default function ProfilePage() {
         .select("id, full_name, avatar_url, email")
         .eq("id", user.id)
         .single()
+      console.log("Re-fetched profile after update:", updatedProfile)
       setProfile(updatedProfile)
       setAvatarPreview(null)
 
