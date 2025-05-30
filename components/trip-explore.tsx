@@ -599,7 +599,7 @@ export function TripExplore({ tripId, destination, startDate, endDate, isAdmin, 
                     {items.map((item) => (
                       <div
                         key={item.id}
-                        className={`bg-white rounded-xl shadow-md border-2 px-5 py-4 flex flex-col justify-between min-h-[120px] ${CATEGORY_CONFIG[catKey].border}`}
+                        className={`relative bg-white rounded-xl shadow-md border-2 px-5 py-4 flex flex-col justify-between min-h-[120px] ${CATEGORY_CONFIG[catKey].border}`}
                         style={{ marginBottom: '12px' }}
                       >
                         <div className="flex flex-col gap-1 flex-1">
