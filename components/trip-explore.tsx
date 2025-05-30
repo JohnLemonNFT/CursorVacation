@@ -489,19 +489,22 @@ export function TripExplore({ tripId, destination, startDate, endDate, isAdmin, 
           <p className="text-gray-600 dark:text-gray-400 mb-4">No more suggestions to review!</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-4">
           {exploreItems.map((item, idx) => (
             <div
               key={item.id}
-              className={`rounded-2xl shadow-xl px-4 py-3 flex flex-col items-center justify-between transition-transform hover:scale-105 border ${idx % 2 === 0 ? 'bg-gradient-to-br from-vault-purple/10 to-white border-vault-purple/10' : 'bg-gradient-to-br from-vault-orange/10 to-white border-vault-orange/10'}`}
+              className={`bg-white rounded-xl shadow-md border-2 transition-transform hover:-translate-y-1 hover:shadow-lg px-5 py-4 flex flex-col justify-between min-h-[120px] ${idx % 2 === 0 ? 'border-vault-purple/40' : 'border-vault-orange/40'}`}
+              style={{ marginBottom: '12px' }}
             >
-              <div className="flex flex-col items-center w-full">
-                <div className="font-bold text-base text-vault-purple mb-1 text-center">{item.title}</div>
-                {item.description && <div className="text-gray-600 text-center mb-1 text-sm">{item.description}</div>}
-                <div className="text-xs text-gray-400 mb-1">Curated by your trip planner</div>
+              <div className="flex flex-col gap-1 flex-1">
+                <div className="font-bold text-lg text-vault-purple mb-1 truncate text-left">{item.title}</div>
+                {item.description && (
+                  <div className="text-gray-600 text-left text-sm mb-1 line-clamp-2">{item.description}</div>
+                )}
+                <div className="text-xs text-gray-400 mt-auto pt-2 text-left">Curated by your trip planner</div>
               </div>
               <button
-                className="mt-2 w-full py-2 rounded-full bg-gradient-to-r from-vault-purple to-vault-orange text-white font-semibold shadow-md hover:opacity-90 transition-all text-sm"
+                className="mt-4 w-full py-2 rounded-full bg-gradient-to-r from-vault-purple to-vault-orange text-white font-semibold shadow hover:shadow-md hover:opacity-90 transition-all text-base"
                 onClick={() => handleAddToWishlist(item)}
               >
                 + Add to Wishlist
