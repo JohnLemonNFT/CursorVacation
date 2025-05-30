@@ -397,12 +397,12 @@ export function TripTravelInfo({
               <CardHeader className="pb-2">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-full bg-vault-purple flex items-center justify-center text-white font-bold">
-                    {profile?.full_name?.[0] || "U"}
+                    {profile && profile.full_name ? profile.full_name[0] : "U"}
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
                       <CardTitle className="text-lg">
-                        {profile?.full_name || profile?.email || "Unknown"}
+                        {profile && profile.full_name ? profile.full_name : profile && profile.email ? profile.email : "Unknown"}
                       </CardTitle>
                       {member.role === "admin" && (
                         <Badge variant="outline" className="text-xs">
