@@ -201,6 +201,7 @@ export function TripWishlist({ tripId, userId }: TripWishlistProps) {
       const { error, data } = await supabase
         .from("wishlist_items")
         .insert({
+          trip_id: tripId,
           created_by: userId,
           title: newItemTitle,
           description: newItemDescription || null,
