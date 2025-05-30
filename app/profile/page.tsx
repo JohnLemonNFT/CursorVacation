@@ -358,10 +358,10 @@ export default function ProfilePage() {
                     className="w-full h-full rounded-full overflow-hidden bg-white dark:bg-gray-800 flex items-center justify-center cursor-pointer"
                     onClick={openPhotoOptions}
                   >
-                    {avatarPreview ? (
+                    {profile?.avatar_url ? (
                       <img
-                        src={avatarPreview}
-                        alt={formData.fullName || "User"}
+                        src={profile.avatar_url}
+                        alt={profile.full_name || "Profile"}
                         className="w-full h-full object-cover"
                       />
                     ) : (
