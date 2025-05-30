@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Plus, Calendar, Compass } from "lucide-react"
+import { Plus, Calendar, Compass, Landmark, CalendarHeart, Utensils, Sparkles } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { format } from "date-fns"
 import { useToast } from "@/components/ui/use-toast"
@@ -32,6 +32,7 @@ type ExploreItem = {
   image_url: string | null
   is_curated: boolean
   added_to_wishlist?: boolean
+  category?: string
 }
 
 type WishlistItem = {
@@ -53,6 +54,22 @@ type TripExploreProps = {
   userId: string
 }
 
+// Helper for category config
+const CATEGORY_CONFIG = {
+  Attractions: {
+    icon: <Landmark className="h-5 w-5 text-teal-500 mr-2" />, color: 'text-teal-600', border: 'border-teal-200',
+  },
+  Events: {
+    icon: <CalendarHeart className="h-5 w-5 text-vault-purple mr-2" />, color: 'text-vault-purple', border: 'border-vault-purple/30',
+  },
+  Restaurants: {
+    icon: <Utensils className="h-5 w-5 text-orange-500 mr-2" />, color: 'text-orange-600', border: 'border-orange-200',
+  },
+  Other: {
+    icon: <Sparkles className="h-5 w-5 text-gray-400 mr-2" />, color: 'text-gray-500', border: 'border-gray-200',
+  },
+}
+
 export function TripExplore({ tripId, destination, startDate, endDate, isAdmin, userId }: TripExploreProps) {
   const [exploreItems, setExploreItems] = useState<ExploreItem[]>([])
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([])
@@ -69,6 +86,20 @@ export function TripExplore({ tripId, destination, startDate, endDate, isAdmin, 
   })
   const [responses, setResponses] = useState<{ [suggestionId: string]: 'yes' | 'no' }>({})
   const [currentIndex, setCurrentIndex] = useState(0)
+
+  // Group exploreItems by category
+  const grouped = exploreItems.reduce((acc, item) => {
+    const cat = item.category || 'Other'
+    if (!acc[cat]) acc[cat] = []
+    acc[cat].push(item)
+    return acc
+  }, {} as Record<string, ExploreItem[]>)
+
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
+
+  const toggleCollapse = (cat: string) => {
+    setCollapsed((prev) => ({ ...prev, [cat]: !prev[cat] }))
+  }
 
   useEffect(() => {
     const fetchExploreItems = async () => {
@@ -489,28 +520,45 @@ export function TripExplore({ tripId, destination, startDate, endDate, isAdmin, 
           <p className="text-gray-600 dark:text-gray-400 mb-4">No more suggestions to review!</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-4">
-          {exploreItems.map((item, idx) => (
-            <div
-              key={item.id}
-              className={`bg-white rounded-xl shadow-md border-2 transition-transform hover:-translate-y-1 hover:shadow-lg px-5 py-4 flex flex-col justify-between min-h-[120px] ${idx % 2 === 0 ? 'border-vault-purple/40' : 'border-vault-orange/40'}`}
-              style={{ marginBottom: '12px' }}
-            >
-              <div className="flex flex-col gap-1 flex-1">
-                <div className="font-bold text-lg text-vault-purple mb-1 truncate text-left">{item.title}</div>
-                {item.description && (
-                  <div className="text-gray-600 text-left text-sm mb-1 line-clamp-2">{item.description}</div>
+        <div className="space-y-8">
+          {Object.entries(grouped).map(([cat, items]) => {
+            const catKey = (cat in CATEGORY_CONFIG ? cat : 'Other') as keyof typeof CATEGORY_CONFIG;
+            return (
+              <div key={cat}>
+                <div className="flex items-center gap-2 mb-2 cursor-pointer select-none" onClick={() => toggleCollapse(cat)}>
+                  {CATEGORY_CONFIG[catKey].icon}
+                  <h3 className={`text-lg font-bold tracking-wide ${CATEGORY_CONFIG[catKey].color}`}>{cat === 'Other' ? 'Other Ideas' : cat}</h3>
+                  <span className="ml-2 text-xs text-gray-400">({items.length})</span>
+                  <span className="ml-auto text-xs text-gray-400">{collapsed[cat] ? 'Show' : 'Hide'}</span>
+                </div>
+                {!collapsed[cat] && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    {items.map((item) => (
+                      <div
+                        key={item.id}
+                        className={`bg-white rounded-xl shadow-md border-2 px-5 py-4 flex flex-col justify-between min-h-[120px] ${CATEGORY_CONFIG[catKey].border}`}
+                        style={{ marginBottom: '12px' }}
+                      >
+                        <div className="flex flex-col gap-1 flex-1">
+                          <div className="font-bold text-lg text-vault-purple mb-1 truncate text-left">{item.title}</div>
+                          {item.description && (
+                            <div className="text-gray-600 text-left text-sm mb-1 line-clamp-2">{item.description}</div>
+                          )}
+                          <div className="text-xs text-gray-400 mt-auto pt-2 text-left">Curated by your trip planner</div>
+                        </div>
+                        <button
+                          className="mt-4 w-full py-2 rounded-full bg-gradient-to-r from-vault-purple to-vault-orange text-white font-semibold shadow hover:shadow-md hover:opacity-90 transition-all text-base"
+                          onClick={() => handleAddToWishlist(item)}
+                        >
+                          + Add to Wishlist
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 )}
-                <div className="text-xs text-gray-400 mt-auto pt-2 text-left">Curated by your trip planner</div>
               </div>
-              <button
-                className="mt-4 w-full py-2 rounded-full bg-gradient-to-r from-vault-purple to-vault-orange text-white font-semibold shadow hover:shadow-md hover:opacity-90 transition-all text-base"
-                onClick={() => handleAddToWishlist(item)}
-              >
-                + Add to Wishlist
-              </button>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
