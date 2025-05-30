@@ -10,6 +10,24 @@ export type ConnectionState = {
 // Track the last fetch time
 let lastFetchTime = 0
 
+// Add or update this type definition at the top of the file:
+export type TripMember = {
+  id: string
+  user_id: string
+  role: string
+  arrival_date: string | null
+  departure_date: string | null
+  flight_details: string | null
+  arrival_time: string | null
+  departure_time: string | null
+  travel_method: string | null
+  profile: {
+    full_name: string | null
+    avatar_url: string | null
+    email: string | null
+  } | null
+}
+
 /**
  * Record the time of a fetch operation
  */
@@ -330,7 +348,7 @@ export async function fetchTripDetails(tripId: string, userId: string, force = f
           arrival_time: null,
           departure_time: null,
           travel_method: null,
-          profile: [adminProfile as { full_name: string | null; avatar_url: string | null; email: string | null }]
+          profile: adminProfile
         }]
       }
     }
@@ -359,6 +377,12 @@ export async function fetchTripDetails(tripId: string, userId: string, force = f
 
     // Record fetch time
     recordFetchTime()
+
+    // After allMembers is finalized, normalize all member.profile values to always be an object (not an array)
+    allMembers = allMembers.map((member) => ({
+      ...member,
+      profile: Array.isArray(member.profile) ? member.profile[0] || null : member.profile
+    }))
 
     return {
       trip: tripData,
