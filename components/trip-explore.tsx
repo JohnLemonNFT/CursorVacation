@@ -90,7 +90,12 @@ export function TripExplore({ tripId, destination, startDate, endDate, isAdmin, 
   const [responses, setResponses] = useState<{ [suggestionId: string]: 'yes' | 'no' }>({})
   const [currentIndex, setCurrentIndex] = useState(0)
 
-  const pendingSuggestions = exploreItems.filter(item => responses[item.id] !== 'yes')
+  // Filter out suggestions already added to the current user's wishlist
+  const pendingSuggestions = exploreItems.filter(
+    item => !wishlistItems.some(
+      w => w.explore_item_id === item.id && w.created_by === userId
+    )
+  )
 
   // Group exploreItems by category
   const grouped = pendingSuggestions.reduce((acc, item) => {
