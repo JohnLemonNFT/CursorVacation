@@ -67,6 +67,10 @@ export function TripExplore({ tripId, destination, startDate, endDate, isAdmin, 
     url: "",
     image_url: "",
   })
+  const [responses, setResponses] = useState<{ [suggestionId: string]: 'yes' | 'no' }>({})
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [dragStartX, setDragStartX] = useState<number | null>(null)
+  const [dragDeltaX, setDragDeltaX] = useState(0)
 
   useEffect(() => {
     const fetchExploreItems = async () => {
@@ -88,14 +92,17 @@ export function TripExplore({ tripId, destination, startDate, endDate, isAdmin, 
         // Fetch wishlist items to check which explore items have been added
         const { data: wishlistData, error: wishlistError } = await supabase
           .from("wishlist_items")
-          .select("id, title, description, is_completed, created_by, explore_item_id")
+          .select("id, title, description, is_completed, created_by, explore_item_id, trip_id")
           .eq("trip_id", tripId)
 
         if (wishlistError) {
           console.error("Error fetching wishlist items:", wishlistError)
         }
 
-        setWishlistItems(wishlistData || [])
+        setWishlistItems((wishlistData || []).map((item) => ({
+          ...item,
+          trip_id: item.trip_id || tripId,
+        })))
 
         // Mark items that have already been added to wishlist
         const itemsWithWishlistStatus =
@@ -154,6 +161,27 @@ export function TripExplore({ tripId, destination, startDate, endDate, isAdmin, 
     }
   }, [tripId])
 
+  useEffect(() => {
+    // Fetch user responses
+    const fetchResponses = async () => {
+      const { data, error } = await supabase
+        .from('suggestion_responses')
+        .select('suggestion_id, response')
+        .eq('user_id', userId)
+        .eq('trip_id', tripId)
+      if (!error && data) {
+        const map: { [suggestionId: string]: 'yes' | 'no' } = {}
+        data.forEach((r: any) => { map[r.suggestion_id] = r.response })
+        setResponses(map)
+      }
+    }
+    if (userId && tripId) fetchResponses()
+  }, [userId, tripId])
+
+  // Filter out suggestions the user has already responded to
+  const pendingSuggestions = exploreItems.filter(item => !responses[item.id])
+  const currentSuggestion = pendingSuggestions[currentIndex] || null
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setNewItem((prev) => ({ ...prev, [name]: value }))
@@ -195,6 +223,7 @@ export function TripExplore({ tripId, destination, startDate, endDate, isAdmin, 
           {
             ...data[0],
             added_to_wishlist: false,
+            trip_id: tripId,
           },
           ...prev,
         ])
@@ -321,6 +350,46 @@ export function TripExplore({ tripId, destination, startDate, endDate, isAdmin, 
     }
   }
 
+  const handleRespond = async (item: ExploreItem, response: 'yes' | 'no') => {
+    // Optimistically update UI
+    setResponses(prev => ({ ...prev, [item.id]: response }))
+    setCurrentIndex(0) // Always show the next available
+
+    // Record response in DB
+    await supabase.from('suggestion_responses').upsert({
+      trip_id: tripId,
+      user_id: userId,
+      suggestion_id: item.id,
+      response,
+    }, { onConflict: 'user_id,suggestion_id' })
+
+    // If yes, add to wishlist
+    if (response === 'yes') {
+      await handleAddToWishlist(item)
+    }
+  }
+
+  // Custom swipe handlers
+  const handlePointerDown = (e: React.PointerEvent) => {
+    setDragStartX(e.clientX)
+  }
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (dragStartX !== null) {
+      setDragDeltaX(e.clientX - dragStartX)
+    }
+  }
+  const handlePointerUp = () => {
+    if (dragStartX !== null) {
+      if (dragDeltaX > 80 && currentSuggestion) {
+        handleRespond(currentSuggestion, 'yes')
+      } else if (dragDeltaX < -80 && currentSuggestion) {
+        handleRespond(currentSuggestion, 'no')
+      }
+    }
+    setDragStartX(null)
+    setDragDeltaX(0)
+  }
+
   return (
     <div className="pb-20">
       <div className="bg-white dark:bg-gray-900 rounded-lg p-6 mb-6 shadow-sm">
@@ -431,71 +500,55 @@ export function TripExplore({ tripId, destination, startDate, endDate, isAdmin, 
             <Skeleton className="h-32 w-full rounded-xl" />
           </div>
         </div>
-      ) : exploreItems.length === 0 ? (
+      ) : pendingSuggestions.length === 0 ? (
         <div className="bg-white dark:bg-gray-900 rounded-lg p-6 text-center">
           <div className="mb-4 p-6 rounded-full bg-gray-100 dark:bg-gray-800 inline-block">
             <Compass className="h-12 w-12 text-vault-purple" />
           </div>
-          <p className="text-gray-600 dark:text-gray-400 mb-4">No activities have been added for {destination} yet.</p>
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button className="bg-vault-purple hover:bg-vault-purple/90 text-white">
-                <Plus className="h-4 w-4 mr-2" />
-                Add First Suggestion
-              </Button>
-            </DialogTrigger>
-            {/* Dialog content is the same as above */}
-          </Dialog>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">No more suggestions to review!</p>
         </div>
       ) : (
-        <div className="space-y-8">
-          <div>
-            <div className="flex items-center gap-2 mb-4 border-b pb-2">
-              <Compass className="h-6 w-6 text-teal-500" />
-              <h3 className="text-xl font-semibold text-teal-600">Trip Suggestions</h3>
-            </div>
-
-            <div className="space-y-4">
-              {exploreItems.map((item) => (
-                <Card key={item.id} className="overflow-hidden rounded-xl shadow-sm border border-gray-200">
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <Compass className="h-5 w-5 text-teal-500" />
-                        <h4 className="text-lg font-semibold">{item.title}</h4>
-                      </div>
-                    </div>
-
-                    <p className="text-gray-600 dark:text-gray-400 mb-4">{item.description}</p>
-
-                    {item.date && (
-                      <div className="flex items-center text-sm text-gray-500 mb-3">
-                        <Calendar className="h-4 w-4 mr-1" />
-                        {format(new Date(item.date), "MMM d, yyyy")}
-                      </div>
-                    )}
-
-                    <Button
-                      variant="outline"
-                      className="w-full border-teal-500 text-teal-600 hover:bg-teal-50 rounded-full flex items-center justify-center gap-2"
-                      onClick={() => handleAddToWishlist(item)}
-                      disabled={isAddingToWishlist === item.id || item.added_to_wishlist}
-                    >
-                      {isAddingToWishlist === item.id ? (
-                        "Adding..."
-                      ) : item.added_to_wishlist ? (
-                        "Added to Wishlist"
-                      ) : (
-                        <>
-                          <Plus className="h-4 w-4" />
-                          Add to Wishlist
-                        </>
-                      )}
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+        <div className="flex flex-col items-center justify-center min-h-[300px]">
+          <div
+            className="w-full max-w-md select-none"
+            style={{ transform: `translateX(${dragDeltaX}px)`, transition: dragStartX ? 'none' : 'transform 0.2s' }}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerLeave={handlePointerUp}
+          >
+            <Card className="overflow-hidden rounded-xl shadow-lg border border-gray-200 animate-fade-in">
+              <CardContent className="p-6 flex flex-col items-center">
+                <div className="flex items-center gap-2 mb-2">
+                  <Compass className="h-5 w-5 text-teal-500" />
+                  <h4 className="text-lg font-semibold">{currentSuggestion.title}</h4>
+                </div>
+                <p className="text-gray-600 dark:text-gray-400 mb-4 text-center">{currentSuggestion.description}</p>
+                {currentSuggestion.date && (
+                  <div className="flex items-center text-sm text-gray-500 mb-3">
+                    <Calendar className="h-4 w-4 mr-1" />
+                    {format(new Date(currentSuggestion.date), "MMM d, yyyy")}
+                  </div>
+                )}
+                <div className="flex gap-4 mt-6 w-full justify-center">
+                  <Button
+                    className="flex-1 bg-green-500 hover:bg-green-600 text-white rounded-full py-3"
+                    onClick={() => handleRespond(currentSuggestion, 'yes')}
+                  >
+                    Yes, Add to Wishlist
+                  </Button>
+                  <Button
+                    className="flex-1 bg-red-500 hover:bg-red-600 text-white rounded-full py-3"
+                    onClick={() => handleRespond(currentSuggestion, 'no')}
+                  >
+                    No, Skip
+                  </Button>
+                </div>
+                <div className="mt-4 text-xs text-gray-400 text-center">
+                  Swipe right for Yes, left for No
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       )}
