@@ -102,11 +102,13 @@ export default function ProfilePage() {
 
       console.log("Updating profile with payload:", {
         full_name: formData.fullName,
+        avatar_url: formData.avatarUrl,
       })
       const { error: updateError } = await supabase
         .from("profiles")
         .update({
           full_name: formData.fullName,
+          avatar_url: formData.avatarUrl,
         })
         .eq("id", user.id)
       if (updateError) {
@@ -139,6 +141,7 @@ export default function ProfilePage() {
         return {
           ...prev,
           full_name: formData.fullName,
+          avatar_url: formData.avatarUrl,
         }
       })
 
@@ -217,9 +220,13 @@ export default function ProfilePage() {
             <div className="flex flex-col items-center gap-4">
               <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden bg-gradient-to-r from-vault-purple to-vault-pink p-1 animate-shimmer">
                 <div className="w-full h-full rounded-full overflow-hidden bg-white dark:bg-gray-800 flex items-center justify-center">
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-r from-vault-purple to-vault-pink text-white text-3xl font-bold">
-                    {formData.fullName?.[0] || user.email?.[0]?.toUpperCase() || "U"}
-                  </div>
+                  {formData.avatarUrl ? (
+                    <img src={formData.avatarUrl} alt="Profile" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-r from-vault-purple to-vault-pink text-white text-3xl font-bold">
+                      {formData.fullName?.[0] || user.email?.[0]?.toUpperCase() || "U"}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -243,6 +250,22 @@ export default function ProfilePage() {
                 className="h-10 text-base border focus:border-vault-purple transition-colors"
               />
               <p className="text-xs text-gray-500">This is how your family will see you</p>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="avatarUrl" className="text-sm font-medium flex items-center gap-2">
+                <Camera className="h-4 w-4 text-vault-purple" />
+                Profile Picture
+              </Label>
+              <Input
+                id="avatarUrl"
+                name="avatarUrl"
+                placeholder="Enter URL for your profile picture"
+                value={formData.avatarUrl}
+                onChange={handleInputChange}
+                className="h-10 text-base border focus:border-vault-purple transition-colors"
+              />
+              <p className="text-xs text-gray-500">Optional: Add a profile picture</p>
             </div>
 
             <div className="pt-2">
