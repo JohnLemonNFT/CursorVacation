@@ -6,11 +6,28 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Plus, Sparkles, Trash, Star, PartyPopper, Lightbulb } from "lucide-react"
+import { Plus, Sparkles, Trash, Star, PartyPopper, Lightbulb, Landmark, CalendarHeart, Utensils } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { formatDistanceToNow } from "date-fns"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+
+// Helper for category config
+const CATEGORY_CONFIG = {
+  Attractions: {
+    icon: <Landmark className="h-5 w-5 text-teal-500 mr-2" />, color: 'text-teal-600', border: 'border-teal-200',
+  },
+  Events: {
+    icon: <CalendarHeart className="h-5 w-5 text-vault-purple mr-2" />, color: 'text-vault-purple', border: 'border-vault-purple/30',
+  },
+  Restaurants: {
+    icon: <Utensils className="h-5 w-5 text-orange-500 mr-2" />, color: 'text-orange-600', border: 'border-orange-200',
+  },
+  Other: {
+    icon: <Sparkles className="h-5 w-5 text-gray-400 mr-2" />, color: 'text-gray-500', border: 'border-gray-200',
+  },
+}
 
 type WishlistItem = {
   id: string
@@ -20,6 +37,7 @@ type WishlistItem = {
   is_completed: boolean
   created_by: string
   explore_item_id: string | null
+  category: string
   profile: {
     full_name: string | null
     avatar_url: string | null
@@ -45,6 +63,7 @@ export function TripWishlist({ tripId, userId }: TripWishlistProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [newItemTitle, setNewItemTitle] = useState("")
   const [newItemDescription, setNewItemDescription] = useState("")
+  const [newItemCategory, setNewItemCategory] = useState("Other")
   const [isAddingItem, setIsAddingItem] = useState(false)
   const [showAddForm, setShowAddForm] = useState(false)
   const [showConfetti, setShowConfetti] = useState(false)
@@ -179,6 +198,7 @@ export function TripWishlist({ tripId, userId }: TripWishlistProps) {
         description: newItemDescription || null,
         is_completed: false,
         explore_item_id: null,
+        category: newItemCategory,
         profile: {
           full_name: "You", // Temporary name until real data loads
           avatar_url: null,
@@ -195,6 +215,7 @@ export function TripWishlist({ tripId, userId }: TripWishlistProps) {
       // Reset form
       setNewItemTitle("")
       setNewItemDescription("")
+      setNewItemCategory("Other")
       setShowAddForm(false)
 
       // Actually perform the insert
@@ -207,6 +228,7 @@ export function TripWishlist({ tripId, userId }: TripWishlistProps) {
           description: newItemDescription || null,
           is_completed: false,
           explore_item_id: null,
+          category: newItemCategory,
         })
         .select(`
         *,
@@ -304,6 +326,20 @@ export function TripWishlist({ tripId, userId }: TripWishlistProps) {
     }, 5000)
   }
 
+  // Group wishlistItems by category
+  const grouped = wishlistItems.reduce((acc, item) => {
+    const cat = item.category || 'Other'
+    if (!acc[cat]) acc[cat] = []
+    acc[cat].push(item)
+    return acc
+  }, {} as Record<string, WishlistItem[]>)
+
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
+
+  const toggleCollapse = (cat: string) => {
+    setCollapsed((prev) => ({ ...prev, [cat]: !prev[cat] }))
+  }
+
   return (
     <div className="space-y-6 relative">
       {/* Confetti animation */}
@@ -375,6 +411,27 @@ export function TripWishlist({ tripId, userId }: TripWishlistProps) {
                 className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-vault-purple/30 focus:border-vault-purple focus:ring-vault-purple min-h-[100px]"
               />
             </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Category</label>
+              <Select
+                value={newItemCategory}
+                onValueChange={setNewItemCategory}
+              >
+                <SelectTrigger className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-vault-purple/30 focus:border-vault-purple focus:ring-vault-purple">
+                  <SelectValue placeholder="Select a category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.keys(CATEGORY_CONFIG).map((category) => (
+                    <SelectItem key={category} value={category}>
+                      <div className="flex items-center">
+                        {CATEGORY_CONFIG[category as keyof typeof CATEGORY_CONFIG].icon}
+                        <span>{category}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </CardContent>
           <CardFooter className="flex justify-between relative z-10">
             <Button
@@ -384,6 +441,7 @@ export function TripWishlist({ tripId, userId }: TripWishlistProps) {
                 setShowAddForm(false)
                 setNewItemTitle("")
                 setNewItemDescription("")
+                setNewItemCategory("Other")
               }}
             >
               Cancel
@@ -442,105 +500,104 @@ export function TripWishlist({ tripId, userId }: TripWishlistProps) {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 gap-4">
-          {wishlistItems.map((item, index) => (
-            <Card
-              key={item.id}
-              ref={item.id === surpriseItemId ? surpriseItemRef : null}
-              className={cn(
-                "animate-fade-in border border-white/40 shadow-md overflow-hidden relative transition-all duration-300",
-                item.is_completed ? "bg-gray-50/80 dark:bg-gray-800/50" : "hover:shadow-lg hover:scale-[1.01]",
-                completedItemId === item.id ? "ring-2 ring-green-500 ring-offset-2" : "",
-                surpriseItemId === item.id ? "ring-2 ring-vault-yellow ring-offset-2 animate-pulse" : "",
-              )}
-              style={{ animationDelay: `${index * 0.05}s` }}
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-vault-purple/5 via-white/5 to-vault-orange/5 opacity-50"></div>
-
-              {/* Celebration animation when completing an item */}
-              {completedItemId === item.id && (
-                <div className="absolute top-2 right-2 animate-ping">
-                  <PartyPopper className="h-5 w-5 text-green-500" />
+        <div className="space-y-8">
+          {Object.entries(grouped).map(([cat, items]) => {
+            const catKey = (cat in CATEGORY_CONFIG ? cat : 'Other') as keyof typeof CATEGORY_CONFIG;
+            return (
+              <div key={cat}>
+                <div className="flex items-center gap-2 mb-2 cursor-pointer select-none" onClick={() => toggleCollapse(cat)}>
+                  {CATEGORY_CONFIG[catKey].icon}
+                  <h3 className={`text-lg font-bold tracking-wide ${CATEGORY_CONFIG[catKey].color}`}>{cat === 'Other' ? 'Other Ideas' : cat}</h3>
+                  <span className="ml-2 text-xs text-gray-400">({items.length})</span>
+                  <span className="ml-auto text-xs text-gray-400">{collapsed[cat] ? 'Show' : 'Hide'}</span>
                 </div>
-              )}
+                {!collapsed[cat] && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    {items.map((item) => (
+                      <Card
+                        key={item.id}
+                        ref={item.id === surpriseItemId ? surpriseItemRef : null}
+                        className={cn(
+                          "animate-fade-in border border-white/40 shadow-md overflow-hidden relative transition-all duration-300",
+                          item.is_completed ? "bg-gray-50/80 dark:bg-gray-800/50" : "hover:shadow-lg hover:scale-[1.01]",
+                          completedItemId === item.id ? "ring-2 ring-green-500 ring-offset-2" : "",
+                          surpriseItemId === item.id ? "ring-2 ring-vault-yellow ring-offset-2 animate-pulse" : "",
+                          CATEGORY_CONFIG[catKey].border
+                        )}
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-br from-vault-purple/5 via-white/5 to-vault-orange/5 opacity-50"></div>
 
-              {/* Surprise highlight */}
-              {surpriseItemId === item.id && (
-                <div className="absolute inset-0 border-4 border-vault-yellow rounded-lg z-10 pointer-events-none"></div>
-              )}
-
-              <CardHeader className="pb-2 relative z-10">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-2">
-                    <Checkbox
-                      checked={item.is_completed}
-                      onCheckedChange={() => handleToggleComplete(item.id, item.is_completed)}
-                      className={cn(
-                        "mt-1 transition-all duration-300",
-                        item.is_completed ? "bg-green-500 border-green-500" : "",
-                      )}
-                    />
-                    <div>
-                      <div className="flex items-center gap-2">
-                        {/* Avatar with null checks */}
-                        {item.profile && item.profile.avatar_url ? (
-                          <img
-                            src={item.profile.avatar_url}
-                            alt={item.profile.full_name || "User"}
-                            className="w-8 h-8 rounded-full border-2 border-white shadow-md"
-                          />
-                        ) : (
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-vault-purple to-vault-orange flex items-center justify-center text-white shadow-md">
-                            {item.profile && item.profile.full_name ? item.profile.full_name[0] : "U"}
+                        {/* Celebration animation when completing an item */}
+                        {completedItemId === item.id && (
+                          <div className="absolute top-2 right-2 animate-ping">
+                            <PartyPopper className="h-5 w-5 text-green-500" />
                           </div>
                         )}
-                        <CardTitle
-                          className={cn(
-                            "transition-all duration-300",
-                            item.is_completed ? "line-through text-gray-500 dark:text-gray-400" : "",
-                            surpriseItemId === item.id ? "text-vault-yellow font-bold" : "",
-                          )}
-                        >
-                          {item.title}
-                          {surpriseItemId === item.id && (
-                            <span className="ml-2 inline-flex items-center">
-                              <Sparkles className="h-4 w-4 text-vault-yellow animate-spin-slow" />
-                              <span className="text-vault-yellow text-sm ml-1">Let's do this!</span>
-                            </span>
-                          )}
-                        </CardTitle>
-                        {/* Hide 'Recommended' badge for items added from Explore */}
-                      </div>
-                      <CardDescription>
-                        Added by {item.profile?.full_name || "Unknown"} •{" "}
-                        {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
-                      </CardDescription>
-                    </div>
+
+                        {/* Surprise highlight */}
+                        {surpriseItemId === item.id && (
+                          <div className="absolute inset-0 border-4 border-vault-yellow rounded-lg z-10 pointer-events-none"></div>
+                        )}
+
+                        <CardHeader className="relative z-10">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <Checkbox
+                                  checked={item.is_completed}
+                                  onCheckedChange={() => handleToggleComplete(item.id, item.is_completed)}
+                                  className="data-[state=checked]:bg-vault-purple data-[state=checked]:border-vault-purple"
+                                />
+                                <CardTitle
+                                  className={cn(
+                                    "transition-all duration-300",
+                                    item.is_completed ? "line-through text-gray-500 dark:text-gray-400" : "",
+                                    surpriseItemId === item.id ? "text-vault-yellow font-bold" : "",
+                                  )}
+                                >
+                                  {item.title}
+                                  {surpriseItemId === item.id && (
+                                    <span className="ml-2 inline-flex items-center">
+                                      <Sparkles className="h-4 w-4 text-vault-yellow animate-spin-slow" />
+                                      <span className="text-vault-yellow text-sm ml-1">Let's do this!</span>
+                                    </span>
+                                  )}
+                                </CardTitle>
+                              </div>
+                              <CardDescription>
+                                Added by {item.profile?.full_name || "Unknown"} •{" "}
+                                {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
+                              </CardDescription>
+                            </div>
+                            {item.created_by === userId && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleDeleteItem(item.id)}
+                                className="text-gray-500 hover:text-red-500 transition-colors duration-300"
+                              >
+                                <Trash className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                        </CardHeader>
+                        {item.description && (
+                          <CardContent
+                            className={cn(
+                              "relative z-10 transition-all duration-300",
+                              item.is_completed ? "text-gray-500 dark:text-gray-400" : "",
+                            )}
+                          >
+                            {item.description}
+                          </CardContent>
+                        )}
+                      </Card>
+                    ))}
                   </div>
-                  {item.created_by === userId && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDeleteItem(item.id)}
-                      className="text-gray-500 hover:text-red-500 transition-colors duration-300"
-                    >
-                      <Trash className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              </CardHeader>
-              {item.description && (
-                <CardContent
-                  className={cn(
-                    "relative z-10 transition-all duration-300",
-                    item.is_completed ? "text-gray-500 dark:text-gray-400" : "",
-                  )}
-                >
-                  {item.description}
-                </CardContent>
-              )}
-            </Card>
-          ))}
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

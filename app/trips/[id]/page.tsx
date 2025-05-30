@@ -938,7 +938,7 @@ export default function TripDetail() {
                       <div className="flex items-center text-sm">
                         <Users className="h-4 w-4 mr-2 text-vault-orange" />
                         <span>
-                          {members.length + 1} {members.length + 1 === 1 ? "member" : "members"}
+                          {members.length} {members.length === 1 ? "member" : "members"}
                         </span>
                       </div>
                     </div>
@@ -1075,7 +1075,7 @@ export default function TripDetail() {
                       </div>
                       <div className="flex items-center text-sm bg-white/60 dark:bg-gray-800/60 px-3 py-1.5 rounded-full shadow-sm">
                         <Users className="h-4 w-4 mr-1 text-vault-orange" />
-                        {members.length + 1} {members.length + 1 === 1 ? "member" : "members"}
+                        {members.length} {members.length === 1 ? "member" : "members"}
                       </div>
                     </div>
 

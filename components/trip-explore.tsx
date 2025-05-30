@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Plus, Calendar, Compass, Landmark, CalendarHeart, Utensils, Sparkles } from "lucide-react"
+import { Plus, Calendar, Compass, Landmark, CalendarHeart, Utensils, Sparkles, Trash, Pencil } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { format } from "date-fns"
 import { useToast } from "@/components/ui/use-toast"
@@ -21,6 +21,7 @@ import {
   DialogTrigger,
   DialogClose,
 } from "@/components/ui/dialog"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 type ExploreItem = {
   id: string
@@ -83,12 +84,15 @@ export function TripExplore({ tripId, destination, startDate, endDate, isAdmin, 
     date: "",
     url: "",
     image_url: "",
+    category: "Other",
   })
   const [responses, setResponses] = useState<{ [suggestionId: string]: 'yes' | 'no' }>({})
   const [currentIndex, setCurrentIndex] = useState(0)
 
+  const pendingSuggestions = exploreItems.filter(item => responses[item.id] !== 'yes')
+
   // Group exploreItems by category
-  const grouped = exploreItems.reduce((acc, item) => {
+  const grouped = pendingSuggestions.reduce((acc, item) => {
     const cat = item.category || 'Other'
     if (!acc[cat]) acc[cat] = []
     acc[cat].push(item)
@@ -207,8 +211,6 @@ export function TripExplore({ tripId, destination, startDate, endDate, isAdmin, 
     if (userId && tripId) fetchResponses()
   }, [userId, tripId])
 
-  // Filter out suggestions the user has already responded to
-  const pendingSuggestions = exploreItems.filter(item => !responses[item.id])
   const currentSuggestion = pendingSuggestions[currentIndex] || null
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -222,7 +224,7 @@ export function TripExplore({ tripId, destination, startDate, endDate, isAdmin, 
     try {
       setIsAddingItem(true)
 
-      // Create the item data without the category field
+      // Create the item data with the category field
       const itemData = {
         trip_id: tripId,
         title: newItem.title,
@@ -231,6 +233,7 @@ export function TripExplore({ tripId, destination, startDate, endDate, isAdmin, 
         url: newItem.url || null,
         image_url: newItem.image_url || null,
         is_curated: true,
+        category: newItem.category,
       }
 
       // Add the item to the database
@@ -248,22 +251,17 @@ export function TripExplore({ tripId, destination, startDate, endDate, isAdmin, 
 
       // Update local state with the new item
       if (data && data.length > 0) {
-        setExploreItems((prev) => [
-          {
-            ...data[0],
-            added_to_wishlist: false,
-            trip_id: tripId,
-          },
-          ...prev,
-        ])
+        setExploreItems((prev) => [data[0], ...prev])
       }
 
+      // Reset form
       setNewItem({
         title: "",
         description: "",
         date: "",
         url: "",
         image_url: "",
+        category: "Other",
       })
 
       toast({
@@ -398,6 +396,47 @@ export function TripExplore({ tripId, destination, startDate, endDate, isAdmin, 
     }
   }
 
+  // Add state for editing
+  const [editItem, setEditItem] = useState<ExploreItem | null>(null)
+  const [editForm, setEditForm] = useState({ title: '', description: '', category: 'Other', date: '' })
+  const [isEditing, setIsEditing] = useState(false)
+
+  const openEditDialog = (item: ExploreItem) => {
+    setEditItem(item)
+    setEditForm({
+      title: item.title,
+      description: item.description,
+      category: item.category || 'Other',
+      date: item.date || '',
+    })
+    setIsEditing(true)
+  }
+
+  const handleEditInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target
+    setEditForm((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const handleEditCategoryChange = (value: string) => {
+    setEditForm((prev) => ({ ...prev, category: value }))
+  }
+
+  const handleEditSave = async () => {
+    if (!editItem) return
+    const updated = {
+      title: editForm.title,
+      description: editForm.description,
+      category: editForm.category,
+      date: editForm.date || null,
+    }
+    // Optimistically update UI
+    setExploreItems((prev) => prev.map((item) => item.id === editItem.id ? { ...item, ...updated } : item))
+    setIsEditing(false)
+    setEditItem(null)
+    // Update in DB
+    await supabase.from('explore_items').update(updated).eq('id', editItem.id)
+  }
+
   return (
     <div className="pb-20">
       <div className="bg-white dark:bg-gray-900 rounded-lg p-6 mb-6 shadow-sm">
@@ -420,6 +459,7 @@ export function TripExplore({ tripId, destination, startDate, endDate, isAdmin, 
                     date: "",
                     url: "",
                     image_url: "",
+                    category: "Other",
                   })
                 }}
               >
@@ -458,6 +498,28 @@ export function TripExplore({ tripId, destination, startDate, endDate, isAdmin, 
                     onChange={handleInputChange}
                     className="rounded-xl"
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Category</label>
+                  <Select
+                    value={newItem.category}
+                    onValueChange={(value) => setNewItem((prev) => ({ ...prev, category: value }))}
+                  >
+                    <SelectTrigger className="rounded-xl">
+                      <SelectValue placeholder="Select a category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.keys(CATEGORY_CONFIG).map((category) => (
+                        <SelectItem key={category} value={category}>
+                          <div className="flex items-center">
+                            {CATEGORY_CONFIG[category as keyof typeof CATEGORY_CONFIG].icon}
+                            <span>{category}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="space-y-2">
@@ -546,6 +608,51 @@ export function TripExplore({ tripId, destination, startDate, endDate, isAdmin, 
                           )}
                           <div className="text-xs text-gray-400 mt-auto pt-2 text-left">Curated by your trip planner</div>
                         </div>
+                        <div className="absolute top-2 right-2 flex gap-1 z-20">
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-gray-400 hover:text-blue-600"
+                                aria-label="Edit suggestion"
+                                onClick={() => openEditDialog(item)}
+                              >
+                                <Pencil className="h-5 w-5" />
+                              </Button>
+                            </DialogTrigger>
+                          </Dialog>
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-gray-400 hover:text-red-600"
+                                aria-label="Delete suggestion"
+                              >
+                                <Trash className="h-5 w-5" />
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-xs">
+                              <DialogHeader>
+                                <DialogTitle>Delete Suggestion?</DialogTitle>
+                                <DialogDescription>
+                                  Are you sure you want to delete this suggestion? This cannot be undone.
+                                </DialogDescription>
+                              </DialogHeader>
+                              <div className="flex justify-end gap-2 mt-4">
+                                <DialogClose asChild>
+                                  <Button variant="outline">Cancel</Button>
+                                </DialogClose>
+                                <DialogClose asChild>
+                                  <Button variant="destructive" onClick={() => handleDeleteItem(item.id)}>
+                                    Delete
+                                  </Button>
+                                </DialogClose>
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+                        </div>
                         <button
                           className="mt-4 w-full py-2 rounded-full bg-gradient-to-r from-vault-purple to-vault-orange text-white font-semibold shadow hover:shadow-md hover:opacity-90 transition-all text-base"
                           onClick={() => handleAddToWishlist(item)}
@@ -560,6 +667,69 @@ export function TripExplore({ tripId, destination, startDate, endDate, isAdmin, 
             );
           })}
         </div>
+      )}
+
+      {/* Global Edit Dialog */}
+      {isEditing && (
+        <Dialog open={isEditing} onOpenChange={setIsEditing}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Edit Suggestion</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Title</label>
+                <Input
+                  name="title"
+                  value={editForm.title}
+                  onChange={handleEditInputChange}
+                  className="rounded-xl"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
+                <Textarea
+                  name="description"
+                  value={editForm.description}
+                  onChange={handleEditInputChange}
+                  className="rounded-xl"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Category</label>
+                <Select value={editForm.category} onValueChange={handleEditCategoryChange}>
+                  <SelectTrigger className="rounded-xl">
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.keys(CATEGORY_CONFIG).map((category) => (
+                      <SelectItem key={category} value={category}>
+                        <div className="flex items-center">
+                          {CATEGORY_CONFIG[category as keyof typeof CATEGORY_CONFIG].icon}
+                          <span>{category}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Date (Optional)</label>
+                <Input
+                  name="date"
+                  type="date"
+                  value={editForm.date}
+                  onChange={handleEditInputChange}
+                  className="rounded-xl"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 mt-4">
+              <Button variant="outline" onClick={() => setIsEditing(false)}>Cancel</Button>
+              <Button onClick={handleEditSave} className="bg-teal-500 text-white">Save</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
 
       <div className="text-center text-sm text-purple-600 mt-12 mb-4">

@@ -122,6 +122,7 @@ export interface Database {
           description: string | null
           is_completed: boolean
           explore_item_id: string | null
+          category: string
         }
         Insert: {
           id?: string
@@ -133,6 +134,7 @@ export interface Database {
           description?: string | null
           is_completed?: boolean
           explore_item_id?: string | null
+          category: string
         }
         Update: {
           id?: string
@@ -144,6 +146,7 @@ export interface Database {
           description?: string | null
           is_completed?: boolean
           explore_item_id?: string | null
+          category?: string
         }
       }
       memories: {
@@ -190,6 +193,7 @@ export interface Database {
           url: string | null
           image_url: string | null
           is_curated: boolean
+          category: string
         }
         Insert: {
           id?: string
@@ -202,6 +206,7 @@ export interface Database {
           url?: string | null
           image_url?: string | null
           is_curated?: boolean
+          category: string
         }
         Update: {
           id?: string
@@ -214,6 +219,7 @@ export interface Database {
           url?: string | null
           image_url?: string | null
           is_curated?: boolean
+          category?: string
         }
       }
     }
