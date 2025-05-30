@@ -554,7 +554,7 @@ export function TripMemories({ tripId, userId, startDate, endDate }: TripMemorie
                               </div>
                             )}
                             <div>
-                              <CardTitle className="text-lg">{memory.profile.full_name || "Unknown"}</CardTitle>
+                              <CardTitle className="text-lg">{memory.profile && memory.profile.full_name ? memory.profile.full_name : "Unknown"}</CardTitle>
                               <CardDescription>{format(new Date(memory.created_at), "h:mm a")}</CardDescription>
                             </div>
                           </div>
