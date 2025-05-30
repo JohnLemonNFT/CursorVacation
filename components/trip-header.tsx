@@ -26,6 +26,8 @@ export function TripHeader({ trip, user }: TripHeaderProps) {
   const [copied, setCopied] = useState(false)
   const { toast } = useToast()
 
+  const homeUrl = typeof window !== 'undefined' ? window.location.origin + '/' : '/';
+
   const handleCopyInviteCode = () => {
     navigator.clipboard.writeText(trip.invite_code)
     setCopied(true)
@@ -38,7 +40,7 @@ export function TripHeader({ trip, user }: TripHeaderProps) {
         await navigator.share({
           title: `Join my trip: ${trip.name}`,
           text: `I've invited you to join my trip on VDH Vault. Use invite code: ${trip.invite_code}`,
-          url: window.location.href,
+          url: homeUrl,
         })
       } catch (error) {
         console.error("Error sharing:", error)
@@ -119,12 +121,12 @@ export function TripHeader({ trip, user }: TripHeaderProps) {
             <div className="space-y-2">
               <Label>Share Link</Label>
               <div className="flex items-center gap-2">
-                <Input value={window.location.href} readOnly />
+                <Input value={homeUrl} readOnly />
                 <Button
                   variant="outline"
                   size="icon"
                   onClick={() => {
-                    navigator.clipboard.writeText(window.location.href)
+                    navigator.clipboard.writeText(homeUrl)
                     setCopied(true)
                     setTimeout(() => setCopied(false), 2000)
                   }}
