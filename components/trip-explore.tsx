@@ -609,51 +609,53 @@ export function TripExplore({ tripId, destination, startDate, endDate, isAdmin, 
                           )}
                           <div className="text-xs text-gray-400 mt-auto pt-2 text-left">Curated by your trip planner</div>
                         </div>
-                        <div className="absolute top-2 right-2 flex gap-1 z-20">
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="text-gray-400 hover:text-blue-600"
-                                aria-label="Edit suggestion"
-                                onClick={() => openEditDialog(item)}
-                              >
-                                <Pencil className="h-5 w-5" />
-                              </Button>
-                            </DialogTrigger>
-                          </Dialog>
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="text-gray-400 hover:text-red-600"
-                                aria-label="Delete suggestion"
-                              >
-                                <Trash className="h-5 w-5" />
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-xs">
-                              <DialogHeader>
-                                <DialogTitle>Delete Suggestion?</DialogTitle>
-                                <DialogDescription>
-                                  Are you sure you want to delete this suggestion? This cannot be undone.
-                                </DialogDescription>
-                              </DialogHeader>
-                              <div className="flex justify-end gap-2 mt-4">
-                                <DialogClose asChild>
-                                  <Button variant="outline">Cancel</Button>
-                                </DialogClose>
-                                <DialogClose asChild>
-                                  <Button variant="destructive" onClick={() => handleDeleteItem(item.id)}>
-                                    Delete
-                                  </Button>
-                                </DialogClose>
-                              </div>
-                            </DialogContent>
-                          </Dialog>
-                        </div>
+                        {isAdmin && (
+                          <div className="absolute top-2 right-2 flex gap-1 z-20">
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="text-gray-400 hover:text-blue-600"
+                                  aria-label="Edit suggestion"
+                                  onClick={() => openEditDialog(item)}
+                                >
+                                  <Pencil className="h-5 w-5" />
+                                </Button>
+                              </DialogTrigger>
+                            </Dialog>
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="text-gray-400 hover:text-red-600"
+                                  aria-label="Delete suggestion"
+                                >
+                                  <Trash className="h-5 w-5" />
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-xs">
+                                <DialogHeader>
+                                  <DialogTitle>Delete Suggestion?</DialogTitle>
+                                  <DialogDescription>
+                                    Are you sure you want to delete this suggestion? This cannot be undone.
+                                  </DialogDescription>
+                                </DialogHeader>
+                                <div className="flex justify-end gap-2 mt-4">
+                                  <DialogClose asChild>
+                                    <Button variant="outline">Cancel</Button>
+                                  </DialogClose>
+                                  <DialogClose asChild>
+                                    <Button variant="destructive" onClick={() => handleDeleteItem(item.id)}>
+                                      Delete
+                                    </Button>
+                                  </DialogClose>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+                          </div>
+                        )}
                         <button
                           className="mt-4 w-full py-2 rounded-full bg-gradient-to-r from-vault-purple to-vault-orange text-white font-semibold shadow hover:shadow-md hover:opacity-90 transition-all text-base"
                           onClick={() => handleAddToWishlist(item)}
