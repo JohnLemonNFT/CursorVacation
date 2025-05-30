@@ -202,11 +202,13 @@ export default function ProfilePage() {
       // Upload new avatar if selected
       if (avatarFile) {
         const uploadedUrl = await uploadAvatar()
+        console.log("Uploaded avatar public URL:", uploadedUrl)
         if (uploadedUrl) {
           avatarUrl = uploadedUrl
         }
       }
 
+      console.log("Updating profile with avatarUrl:", avatarUrl)
       const { error } = await supabase
         .from("profiles")
         .update({
@@ -317,6 +319,8 @@ export default function ProfilePage() {
   }
 
   const displayAvatarUrl = avatarPreview || formData.avatarUrl
+
+  console.log("Rendering avatar with URL:", profile?.avatar_url)
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 px-4 py-6">
