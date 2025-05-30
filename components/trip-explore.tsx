@@ -490,18 +490,18 @@ export function TripExplore({ tripId, destination, startDate, endDate, isAdmin, 
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-          {exploreItems.map((item) => (
-            <div key={item.id} className="rounded-2xl bg-gradient-to-br from-vault-purple/10 to-vault-orange/10 shadow-xl p-5 flex flex-col items-center justify-between transition-transform hover:scale-105">
+          {exploreItems.map((item, idx) => (
+            <div
+              key={item.id}
+              className={`rounded-2xl shadow-xl px-4 py-3 flex flex-col items-center justify-between transition-transform hover:scale-105 border ${idx % 2 === 0 ? 'bg-gradient-to-br from-vault-purple/10 to-white border-vault-purple/10' : 'bg-gradient-to-br from-vault-orange/10 to-white border-vault-orange/10'}`}
+            >
               <div className="flex flex-col items-center w-full">
-                <div className="mb-3 text-4xl">
-                  <span role="img" aria-label="suggestion">🧭</span>
-                </div>
-                <div className="font-bold text-lg text-vault-purple mb-1 text-center">{item.title}</div>
-                {item.description && <div className="text-gray-600 text-center mb-2">{item.description}</div>}
-                <div className="text-xs text-gray-400 mb-2">Curated by your trip planner</div>
+                <div className="font-bold text-base text-vault-purple mb-1 text-center">{item.title}</div>
+                {item.description && <div className="text-gray-600 text-center mb-1 text-sm">{item.description}</div>}
+                <div className="text-xs text-gray-400 mb-1">Curated by your trip planner</div>
               </div>
               <button
-                className="mt-2 w-full py-2 rounded-full bg-gradient-to-r from-vault-purple to-vault-orange text-white font-semibold shadow-md hover:opacity-90 transition-all"
+                className="mt-2 w-full py-2 rounded-full bg-gradient-to-r from-vault-purple to-vault-orange text-white font-semibold shadow-md hover:opacity-90 transition-all text-sm"
                 onClick={() => handleAddToWishlist(item)}
               >
                 + Add to Wishlist
