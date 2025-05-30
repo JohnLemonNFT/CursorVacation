@@ -68,7 +68,7 @@ type TripMember = {
     full_name: string | null
     avatar_url: string | null
     email: string | null
-  }
+  } | null
 }
 
 // Connection state type
@@ -537,6 +537,7 @@ export default function TripDetail() {
         setFetchAttempts(0)
         console.log("Trip data loaded successfully")
         console.log("Trip members:", result.members) // Debug log for trip members
+        console.log("Raw response from fetchTripDetails:", result) // Debug log for raw response
       } else {
         throw new Error("Invalid response format")
       }
