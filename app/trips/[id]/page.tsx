@@ -536,6 +536,7 @@ export default function TripDetail() {
         setError("")
         setFetchAttempts(0)
         console.log("Trip data loaded successfully")
+        console.log("Trip members:", result.members) // Debug log for trip members
       } else {
         throw new Error("Invalid response format")
       }

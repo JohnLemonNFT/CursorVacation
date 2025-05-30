@@ -39,4 +39,9 @@
 1. Simpler auth state handling is more reliable
 2. Consistent cache versioning is crucial
 3. Clear error messages improve user experience
-4. Regular testing helps identify issues early 
+4. Regular testing helps identify issues early
+
+## Project Status Board
+
+- [x] Fix member/trip sync issue: Ensure the app correctly displays all members in a trip as shown in the database.
+  - Added debug logging in loadTripData to log trip members for diagnosis. 
