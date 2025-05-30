@@ -1229,7 +1229,7 @@ export default function TripDetail() {
       </main>
 
       {/* Mobile Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 shadow-lg z-50 md:hidden pb-[env(safe-area-inset-bottom)]">
+      <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 shadow-lg z-50 md:hidden pb-[calc(16px+env(safe-area-inset-bottom))]">
         <div className="flex justify-around py-2">
           {mainTabs.map((tab) => (
             <button

@@ -265,9 +265,6 @@ export function TripMemories({ tripId, userId, startDate, endDate }: TripMemorie
 
   return (
     <div className="space-y-6 relative pb-[calc(120px+env(safe-area-inset-bottom))]">
-      {/* Memory Reminder */}
-      <MemoryReminder tripId={tripId} userId={userId} startDate={startDate} endDate={endDate} isActive={true} />
-
       {/* Heart animation */}
       {showHeartAnimation && (
         <div className="fixed inset-0 pointer-events-none z-50 flex items-center justify-center">
