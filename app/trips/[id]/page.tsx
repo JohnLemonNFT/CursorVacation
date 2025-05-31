@@ -704,7 +704,6 @@ export default function TripDetail() {
     { id: "wishlist", label: "Wishlist", icon: <List className="h-5 w-5" /> },
     { id: "explore", label: "Explore", icon: <Compass className="h-5 w-5" /> },
     { id: "travel", label: "Travel", icon: <Plane className="h-5 w-5" /> },
-    { id: "media", label: "Media", icon: <ImageIcon className="h-5 w-5" /> },
   ]
 
   // Function to directly open memory form
@@ -1215,7 +1214,49 @@ export default function TripDetail() {
           )}
 
           {activeTab === "memories" && (
-            <TripMemories tripId={trip.id} userId={user.id} startDate={tripStartDate} endDate={tripEndDate} />
+            <>
+              {trip.shared_album_url && (
+                <div className="mb-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded shadow flex flex-col sm:flex-row sm:items-center gap-3">
+                  <div className="flex-1">
+                    <div className="font-bold text-yellow-800 flex items-center gap-2 mb-1">
+                      <Camera className="h-5 w-5 text-yellow-600" />
+                      Family Shared Album
+                    </div>
+                    <div className="text-sm text-yellow-700 mb-2">
+                      Share all your trip photos and videos with the family! Use the shared album link below so everyone can access and save memories, even after the trip.
+                    </div>
+                    <div className="flex gap-2 items-center">
+                      <a
+                        href={trip.shared_album_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center px-3 py-1 bg-yellow-200 text-yellow-900 rounded hover:bg-yellow-300 font-medium transition"
+                      >
+                        Open Shared Album
+                      </a>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          navigator.clipboard.writeText(trip.shared_album_url || "")
+                          toast({
+                            title: "Copied!",
+                            description: "Shared album link copied to clipboard",
+                            duration: 2000,
+                          })
+                        }}
+                      >
+                        <Copy className="h-4 w-4 mr-1" /> Copy Link
+                      </Button>
+                    </div>
+                    <div className="text-xs text-yellow-700 mt-2">
+                      Tip: Upload your best moments below, but use the shared album for all your photos.
+                    </div>
+                  </div>
+                </div>
+              )}
+              <TripMemories tripId={trip.id} userId={user.id} startDate={tripStartDate} endDate={tripEndDate} />
+            </>
           )}
 
           {activeTab === "wishlist" && <TripWishlist tripId={trip.id} userId={user.id} />}
@@ -1238,14 +1279,6 @@ export default function TripDetail() {
               members={members}
               startDate={tripStartDate}
               endDate={tripEndDate}
-              isAdmin={trip.created_by === user.id}
-            />
-          )}
-
-          {activeTab === "media" && (
-            <TripMediaLibrary
-              sharedAlbumUrl={trip.shared_album_url}
-              tripId={trip.id}
               isAdmin={trip.created_by === user.id}
             />
           )}
