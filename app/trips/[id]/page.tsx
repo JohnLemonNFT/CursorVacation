@@ -42,6 +42,7 @@ import { MobileHeader } from "@/components/mobile-header"
 import { useToast } from "@/components/ui/use-toast"
 import { cn } from "@/lib/utils"
 import { fetchTripDetails } from "@/lib/data-manager"
+import { TripWeather } from "@/components/TripWeather"
 
 type Trip = {
   id: string
@@ -1208,6 +1209,8 @@ export default function TripDetail() {
                   </div>
                 </div>
               )}
+
+              <TripWeather destination={trip.destination} startDate={trip.start_date} endDate={trip.end_date} />
             </>
           )}
 
