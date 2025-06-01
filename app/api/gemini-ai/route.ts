@@ -112,64 +112,16 @@ export async function POST(req: Request) {
         topK: 40,
         topP: 0.95,
         maxOutputTokens: 1024,
-      },
-      tools: [
-        { functionDeclarations }
-      ]
+      }
     });
 
     console.log("Received response from Gemini AI");
     const response = await result.response;
-    const functionCalls = response.candidates?.[0]?.content?.parts?.filter(part => part.functionCall) || [];
     const text = response.text();
-    console.log("Processed AI response:", { text, functionCalls });
-
-    // Process function calls and get their results
-    const functionResults = [];
-    for (const call of functionCalls) {
-      if (call.functionCall) {
-        console.log("Processing function call:", call.functionCall.name);
-        let result;
-        try {
-          switch (call.functionCall.name) {
-            case 'getTripWeather':
-              result = await fetch('/api/gemini-weather', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  destination: trip.destination,
-                  startDate: trip.start_date,
-                  endDate: trip.end_date,
-                  date: call.functionCall.args && typeof call.functionCall.args === 'object' ? (call.functionCall.args as any).date : undefined
-                })
-              }).then(res => res.json());
-              break;
-            case 'getTripActivities':
-              // TODO: Implement activity fetching from your database
-              result = { message: "Activity information will be available soon." };
-              break;
-            case 'getTripMemories':
-              // TODO: Implement memory fetching from your database
-              result = { message: "Memory information will be available soon." };
-              break;
-            case 'getTripTravelInfo':
-              // TODO: Implement travel info fetching from your database
-              result = { message: "Travel information will be available soon." };
-              break;
-          }
-          console.log("Function call result:", { name: call.functionCall.name, result });
-        } catch (error) {
-          console.error("Error processing function call:", { name: call.functionCall.name, error });
-          result = { error: "Failed to process function call" };
-        }
-        functionResults.push({ name: call.functionCall.name, result });
-      }
-    }
+    console.log("Processed AI response:", { text });
 
     return NextResponse.json({
-      text,
-      functionCalls,
-      functionResults
+      text
     });
   } catch (error) {
     console.error('AI API Error:', error);
