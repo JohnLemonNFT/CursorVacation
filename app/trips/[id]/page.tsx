@@ -26,6 +26,7 @@ import {
   RefreshCw,
   AlertCircle,
   WifiOff,
+  Sparkles,
 } from "lucide-react"
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
@@ -43,6 +44,7 @@ import { useToast } from "@/components/ui/use-toast"
 import { cn } from "@/lib/utils"
 import { fetchTripDetails } from "@/lib/data-manager"
 import { TripWeather } from "@/components/TripWeather"
+import { TripAI } from "@/components/TripAI"
 
 type Trip = {
   id: string
@@ -704,6 +706,7 @@ export default function TripDetail() {
     { id: "wishlist", label: "Wishlist", icon: <List className="h-5 w-5" /> },
     { id: "explore", label: "Explore", icon: <Compass className="h-5 w-5" /> },
     { id: "travel", label: "Travel", icon: <Plane className="h-5 w-5" /> },
+    { id: "ai", label: "AI Assistant", icon: <Sparkles className="h-5 w-5" /> },
   ]
 
   // Function to directly open memory form
@@ -1281,6 +1284,10 @@ export default function TripDetail() {
               endDate={tripEndDate}
               isAdmin={trip.created_by === user.id}
             />
+          )}
+
+          {activeTab === "ai" && (
+            <TripAI trip={trip} members={members} />
           )}
         </div>
       </main>
