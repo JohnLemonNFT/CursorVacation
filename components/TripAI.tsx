@@ -1,4 +1,5 @@
 import { useState } from "react";
+import ReactMarkdown from 'react-markdown';
 
 const SUGGESTIONS = [
   "What should I pack for this trip?",
@@ -89,9 +90,13 @@ export function TripAI({ trip, members }: { trip: any, members: any[] }) {
       <div className="mb-4 max-h-64 overflow-y-auto bg-gray-50 rounded p-2">
         {messages.map((msg, i) => (
           <div key={i} className={msg.role === "user" ? "text-right mb-2" : "text-left mb-2"}>
-            <span className={msg.role === "user" ? "inline-block bg-blue-100 text-blue-900 px-2 py-1 rounded" : "inline-block bg-gray-200 text-gray-800 px-2 py-1 rounded"}>
-              {msg.text}
-            </span>
+            {msg.role === "user" ? (
+              <span className="inline-block bg-blue-100 text-blue-900 px-2 py-1 rounded">{msg.text}</span>
+            ) : (
+              <span className="inline-block bg-gray-200 text-gray-800 px-2 py-1 rounded prose prose-sm max-w-none">
+                <ReactMarkdown>{msg.text}</ReactMarkdown>
+              </span>
+            )}
           </div>
         ))}
         {loading && <div className="text-gray-400 text-sm">Thinking...</div>}
