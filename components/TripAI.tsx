@@ -12,21 +12,37 @@ export function TripAI({ trip, members }: { trip: any, members: any[] }) {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<{ role: string; text: string }[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const tripContext = `Trip details:\n- Destination: ${trip.destination}\n- Dates: ${trip.start_date} to ${trip.end_date}\n- Members: ${members.length}`;
 
   const sendMessage = async (question: string) => {
     setLoading(true);
+    setError("");
     setMessages((msgs) => [...msgs, { role: "user", text: question }]);
-    const prompt = `${tripContext}\n\nUser question: ${question}`;
-    const res = await fetch("/api/gemini-weather", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ destination: trip.destination, startDate: trip.start_date, endDate: trip.end_date, question }),
-    });
-    const data = await res.json();
-    setMessages((msgs) => [...msgs, { role: "ai", text: data.summary || data.answer || "No answer available." }]);
-    setLoading(false);
+    
+    try {
+      const res = await fetch("/api/gemini-weather", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ destination: trip.destination, startDate: trip.start_date, endDate: trip.end_date, question }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || errorData.details || "Failed to get AI response");
+      }
+
+      const data = await res.json();
+      setMessages((msgs) => [...msgs, { role: "ai", text: data.summary || data.answer || "No answer available." }]);
+    } catch (err) {
+      console.error("AI response error:", err);
+      const errorMessage = err instanceof Error ? err.message : "Failed to get AI response";
+      setError(errorMessage);
+      setMessages((msgs) => [...msgs, { role: "ai", text: `Error: ${errorMessage}` }]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -35,6 +51,11 @@ export function TripAI({ trip, members }: { trip: any, members: any[] }) {
         <span role="img" aria-label="AI">✨</span> AI Assistant
       </h2>
       <div className="mb-3 text-gray-600 text-sm">How can I help with your trip to <span className="font-semibold">{trip.destination}</span>?</div>
+      {error && (
+        <div className="mb-3 p-2 bg-red-100 text-red-700 rounded text-sm">
+          {error}
+        </div>
+      )}
       <div className="flex flex-wrap gap-2 mb-4">
         {SUGGESTIONS.map((s) => (
           <button

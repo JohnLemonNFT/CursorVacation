@@ -15,6 +15,12 @@ export function TripWeather({ destination, startDate, endDate }: { destination: 
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ destination, startDate, endDate }),
         });
+        
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.error || errorData.details || "Failed to fetch weather summary");
+        }
+        
         const data = await res.json();
         if (data.summary) {
           setSummary(data.summary);
@@ -22,7 +28,8 @@ export function TripWeather({ destination, startDate, endDate }: { destination: 
           setError("No weather summary available.");
         }
       } catch (err) {
-        setError("Failed to fetch weather summary.");
+        console.error("Weather fetch error:", err);
+        setError(err instanceof Error ? err.message : "Failed to fetch weather summary.");
       }
       setLoading(false);
     }
