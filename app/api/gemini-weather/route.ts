@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
     console.log("Initialized GoogleGenerativeAI client");
 
     try {
-      const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-001" });
       console.log("Got generative model");
       
       const result = await model.generateContent(prompt);

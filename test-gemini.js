@@ -75,6 +75,40 @@ const functionDeclarations = [
   }
 ];
 
+// Test queries that match real user scenarios
+const testQueries = [
+  {
+    name: "Weather Check",
+    query: "What's the weather going to be like during our trip? Should we pack any specific items?",
+    context: "Planning for outdoor activities and packing"
+  },
+  {
+    name: "Activity Planning",
+    query: "We have two kids under 10. What activities would you recommend for our family?",
+    context: "Family-friendly activity planning"
+  },
+  {
+    name: "Travel Coordination",
+    query: "Can you help me coordinate our arrival times? Some of us are arriving by plane and others by car.",
+    context: "Travel logistics coordination"
+  },
+  {
+    name: "Memory Capture",
+    query: "What are some good prompts to help us capture meaningful memories during our trip?",
+    context: "Memory journaling and documentation"
+  },
+  {
+    name: "Local Recommendations",
+    query: "What are some must-try local restaurants near our hotel? We're staying in the main tourist area.",
+    context: "Local dining and experiences"
+  },
+  {
+    name: "Packing List",
+    query: "Can you help me create a packing list based on our activities and the weather forecast?",
+    context: "Trip preparation and packing"
+  }
+];
+
 async function runChat() {
   try {
     // Mock trip data matching your actual data structure
@@ -130,27 +164,32 @@ Location: ${trip.destination}
 Dates: ${trip.start_date} to ${trip.end_date}
 Members: ${members.map(m => `${m.profile?.full_name} (${m.travel_method})`).join(', ')}`;
 
-    console.log('Sending prompt to Gemini with trip context...');
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.0-flash-001',
-      contents: `${tripContext}\n\nUser: What's the weather going to be like during our trip?`,
-      config: {
-        toolConfig: {
-          functionCallingConfig: {
-            mode: FunctionCallingConfigMode.ANY,
-            allowedFunctionNames: ['getTripWeather', 'getTripActivities', 'getTripMemories', 'getTripTravelInfo']
-          }
-        },
-        tools: [{ functionDeclarations }]
-      }
-    });
+    // Run each test query
+    for (const test of testQueries) {
+      console.log(`\n=== Testing: ${test.name} ===`);
+      console.log(`Context: ${test.context}`);
+      console.log(`Query: ${test.query}`);
+      
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.0-flash-001',
+        contents: `${tripContext}\n\nUser: ${test.query}`,
+        config: {
+          toolConfig: {
+            functionCallingConfig: {
+              mode: FunctionCallingConfigMode.ANY,
+              allowedFunctionNames: ['getTripWeather', 'getTripActivities', 'getTripMemories', 'getTripTravelInfo']
+            }
+          },
+          tools: [{ functionDeclarations }]
+        }
+      });
 
-    console.log('Response received:');
-    console.log('Function calls:', response.functionCalls);
-    
-    // If you want to see the text response as well
-    if (response.text) {
-      console.log('Text response:', response.text);
+      console.log('\nResponse:');
+      console.log('Function calls:', response.functionCalls);
+      if (response.text) {
+        console.log('Text response:', response.text);
+      }
+      console.log('----------------------------------------');
     }
   } catch (error) {
     console.error('Error:', error);

@@ -14,18 +14,16 @@ export function TripAI({ trip, members }: { trip: any, members: any[] }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const tripContext = `Trip details:\n- Destination: ${trip.destination}\n- Dates: ${trip.start_date} to ${trip.end_date}\n- Members: ${members.length}`;
-
   const sendMessage = async (question: string) => {
     setLoading(true);
     setError("");
     setMessages((msgs) => [...msgs, { role: "user", text: question }]);
     
     try {
-      const res = await fetch("/api/gemini-weather", {
+      const res = await fetch("/api/gemini-ai", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ destination: trip.destination, startDate: trip.start_date, endDate: trip.end_date, question }),
+        body: JSON.stringify({ trip, members, question }),
       });
 
       if (!res.ok) {
@@ -34,7 +32,21 @@ export function TripAI({ trip, members }: { trip: any, members: any[] }) {
       }
 
       const data = await res.json();
-      setMessages((msgs) => [...msgs, { role: "ai", text: data.summary || data.answer || "No answer available." }]);
+      
+      // Process function results and combine with text response
+      let responseText = data.text || "";
+      if (data.functionResults && data.functionResults.length > 0) {
+        responseText += "\n\nAdditional Information:\n";
+        data.functionResults.forEach((result: any) => {
+          if (result.result.summary) {
+            responseText += `\n${result.result.summary}`;
+          } else if (result.result.message) {
+            responseText += `\n${result.result.message}`;
+          }
+        });
+      }
+
+      setMessages((msgs) => [...msgs, { role: "ai", text: responseText }]);
     } catch (err) {
       console.error("AI response error:", err);
       const errorMessage = err instanceof Error ? err.message : "Failed to get AI response";
