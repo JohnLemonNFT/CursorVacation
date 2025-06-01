@@ -68,12 +68,22 @@ const functionDeclarations: any = [
 export async function POST(req: Request) {
   try {
     const { trip, members, question } = await req.json();
+    console.log("Received AI request:", { trip, members, question });
+
+    if (!trip || !members || !question) {
+      console.error("Missing required parameters:", { trip, members, question });
+      return NextResponse.json(
+        { error: 'Missing required parameters', details: 'trip, members, and question are required' },
+        { status: 400 }
+      );
+    }
 
     // Add trip context to the prompt
     const tripContext = `Current Trip: ${trip.name}\nLocation: ${trip.destination}\nDates: ${trip.start_date} to ${trip.end_date}\nMembers: ${members.map((m: any) => `${m.profile?.full_name} (${m.travel_method})`).join(', ')}`;
+    console.log("Generated trip context:", tripContext);
 
     const model = genAI.getGenerativeModel({ 
-      model: 'gemini-2.0-flash-001',
+      model: 'gemini-1.5-pro-latest',
       safetySettings: [
         {
           category: HarmCategory.HARM_CATEGORY_HARASSMENT,
@@ -94,6 +104,7 @@ export async function POST(req: Request) {
       ],
     });
     
+    console.log("Sending request to Gemini AI");
     const result = await model.generateContent({
       contents: [{ role: 'user', parts: [{ text: `${tripContext}\n\nUser: ${question}` }] }],
       generationConfig: {
@@ -107,40 +118,49 @@ export async function POST(req: Request) {
       ]
     });
 
+    console.log("Received response from Gemini AI");
     const response = await result.response;
     const functionCalls = response.candidates?.[0]?.content?.parts?.filter(part => part.functionCall) || [];
     const text = response.text();
+    console.log("Processed AI response:", { text, functionCalls });
 
     // Process function calls and get their results
     const functionResults = [];
     for (const call of functionCalls) {
       if (call.functionCall) {
+        console.log("Processing function call:", call.functionCall.name);
         let result;
-        switch (call.functionCall.name) {
-          case 'getTripWeather':
-            result = await fetch('/api/gemini-weather', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                destination: trip.destination,
-                startDate: trip.start_date,
-                endDate: trip.end_date,
-                date: call.functionCall.args && typeof call.functionCall.args === 'object' ? (call.functionCall.args as any).date : undefined
-              })
-            }).then(res => res.json());
-            break;
-          case 'getTripActivities':
-            // TODO: Implement activity fetching from your database
-            result = { message: "Activity information will be available soon." };
-            break;
-          case 'getTripMemories':
-            // TODO: Implement memory fetching from your database
-            result = { message: "Memory information will be available soon." };
-            break;
-          case 'getTripTravelInfo':
-            // TODO: Implement travel info fetching from your database
-            result = { message: "Travel information will be available soon." };
-            break;
+        try {
+          switch (call.functionCall.name) {
+            case 'getTripWeather':
+              result = await fetch('/api/gemini-weather', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  destination: trip.destination,
+                  startDate: trip.start_date,
+                  endDate: trip.end_date,
+                  date: call.functionCall.args && typeof call.functionCall.args === 'object' ? (call.functionCall.args as any).date : undefined
+                })
+              }).then(res => res.json());
+              break;
+            case 'getTripActivities':
+              // TODO: Implement activity fetching from your database
+              result = { message: "Activity information will be available soon." };
+              break;
+            case 'getTripMemories':
+              // TODO: Implement memory fetching from your database
+              result = { message: "Memory information will be available soon." };
+              break;
+            case 'getTripTravelInfo':
+              // TODO: Implement travel info fetching from your database
+              result = { message: "Travel information will be available soon." };
+              break;
+          }
+          console.log("Function call result:", { name: call.functionCall.name, result });
+        } catch (error) {
+          console.error("Error processing function call:", { name: call.functionCall.name, error });
+          result = { error: "Failed to process function call" };
         }
         functionResults.push({ name: call.functionCall.name, result });
       }
@@ -154,7 +174,11 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error('AI API Error:', error);
     return NextResponse.json(
-      { error: 'Failed to process AI request', details: error instanceof Error ? error.message : 'Unknown error' },
+      { 
+        error: 'Failed to process AI request', 
+        details: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      },
       { status: 500 }
     );
   }
