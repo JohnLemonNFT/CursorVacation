@@ -113,9 +113,62 @@ export default function JoinTrip() {
     }
   }, [])
 
-  useEffect(() => {
-    router.push("/")
-  }, [router])
-
-  return null
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-vault-purple/10 to-vault-orange/10 p-4">
+      <Card className="w-full max-w-md shadow-lg">
+        <CardHeader>
+          <CardTitle>Join a Trip</CardTitle>
+          <CardDescription>Enter your invite code to join a family trip.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form
+            onSubmit={e => {
+              e.preventDefault();
+              handleJoinTrip();
+            }}
+            className="space-y-4"
+          >
+            <div>
+              <Label htmlFor="invite-code">Invite Code</Label>
+              <Input
+                id="invite-code"
+                value={inviteCode}
+                onChange={e => setInviteCode(e.target.value.toUpperCase())}
+                placeholder="ABC123"
+                autoFocus
+                autoComplete="off"
+                maxLength={12}
+                className="font-mono tracking-widest text-lg"
+                disabled={isJoining || isSigningIn || authLoading}
+              />
+            </div>
+            {error && <div className="text-red-600 text-sm">{error}</div>}
+            <Button
+              type="submit"
+              className="w-full bg-gradient-to-r from-vault-purple to-vault-orange hover:opacity-90"
+              disabled={isJoining || isSigningIn || authLoading}
+            >
+              {isJoining ? "Joining..." : "Join Trip"}
+            </Button>
+          </form>
+        </CardContent>
+        <CardFooter className="flex flex-col gap-2">
+          {!user && (
+            <Button
+              variant="outline"
+              className="w-full flex items-center gap-2"
+              onClick={handleSignIn}
+              disabled={isSigningIn || isJoining || authLoading}
+            >
+              <FcGoogle className="h-5 w-5" />
+              {isSigningIn ? "Signing in..." : "Sign in with Google"}
+            </Button>
+          )}
+          <div className="text-xs text-gray-500 mt-2 text-center">
+            Don't have an invite code? <Link href="/dashboard" className="text-vault-purple underline">Go to Dashboard</Link>
+          </div>
+        </CardFooter>
+      </Card>
+    </div>
+  )
 }
