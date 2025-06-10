@@ -42,6 +42,10 @@ export default function RootLayout({
       <head>
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="mobile-web-app-capable" content="yes" />
+        <link rel="manifest" href="/manifest.json" />
+        <link rel="icon" href="/icon-512x512.png" sizes="512x512" />
+        <link rel="apple-touch-icon" href="/icon-512x512.png" />
+        <meta name="theme-color" content="#8A4FFF" />
       </head>
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
