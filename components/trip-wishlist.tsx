@@ -367,36 +367,20 @@ export function TripWishlist({ tripId, userId, personFilter, members = [], setPe
     <div className="space-y-6 relative">
       {/* Person filter buttons */}
       {members.length > 0 && setPersonFilter && (
-        <div className="flex gap-2 mb-4">
-          <button
-            className={cn(
-              "flex items-center gap-2 px-3 py-1 rounded-full border text-sm font-medium transition-all",
-              !personFilter
-                ? "bg-gradient-to-r from-vault-purple to-vault-orange text-white border-vault-purple shadow"
-                : "bg-white/80 dark:bg-gray-800/80 border-vault-purple/20 text-vault-purple hover:bg-vault-purple/10"
-            )}
-            onClick={() => setPersonFilter(null)}
-          >
-            <span className="w-7 h-7 flex items-center justify-center rounded-full bg-gradient-to-r from-vault-purple to-vault-orange text-white font-bold mr-2">All</span>
-            All
-          </button>
-          {members.map((member) => (
-            <button
-              key={member.user_id}
-              className={cn(
-                "flex items-center gap-2 px-3 py-1 rounded-full border text-sm font-medium transition-all",
-                personFilter === member.user_id
-                  ? "bg-gradient-to-r from-vault-purple to-vault-orange text-white border-vault-purple shadow"
-                  : "bg-white/80 dark:bg-gray-800/80 border-vault-purple/20 text-vault-purple hover:bg-vault-purple/10"
-              )}
-              onClick={() => setPersonFilter(member.user_id)}
-            >
-              <span className="w-7 h-7 flex items-center justify-center rounded-full bg-vault-purple text-white font-bold mr-2">
-                {getInitials(member.profile?.full_name ?? null)}
-              </span>
-              {member.profile?.full_name || "Unknown"}
-            </button>
-          ))}
+        <div className="mb-4 max-w-xs">
+          <Select value={personFilter || "all"} onValueChange={val => setPersonFilter(val === "all" ? null : val)}>
+            <SelectTrigger className="w-full bg-white/80 dark:bg-gray-800/80 border-vault-purple/30 focus:border-vault-purple focus:ring-vault-purple">
+              <SelectValue placeholder="Filter by person" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              {members.map(member => (
+                <SelectItem key={member.user_id} value={member.user_id}>
+                  {member.profile?.full_name || "Unknown"}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       )}
       {/* Confetti animation */}
