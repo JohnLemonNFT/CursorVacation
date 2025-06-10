@@ -356,6 +356,13 @@ export function TripWishlist({ tripId, userId, personFilter, members = [], setPe
     return true
   })
 
+  function getInitials(name: string | null) {
+    if (!name) return "?"
+    const parts = name.trim().split(" ")
+    if (parts.length === 1) return parts[0][0].toUpperCase()
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+  }
+
   return (
     <div className="space-y-6 relative">
       {/* Person filter buttons */}
@@ -370,7 +377,8 @@ export function TripWishlist({ tripId, userId, personFilter, members = [], setPe
             )}
             onClick={() => setPersonFilter(null)}
           >
-            <User className="h-5 w-5" /> All
+            <span className="w-7 h-7 flex items-center justify-center rounded-full bg-gradient-to-r from-vault-purple to-vault-orange text-white font-bold mr-2">All</span>
+            All
           </button>
           {members.map((member) => (
             <button
@@ -383,11 +391,9 @@ export function TripWishlist({ tripId, userId, personFilter, members = [], setPe
               )}
               onClick={() => setPersonFilter(member.user_id)}
             >
-              {member.profile?.avatar_url ? (
-                <img src={member.profile.avatar_url} alt={member.profile.full_name || "User"} className="w-5 h-5 rounded-full object-cover" />
-              ) : (
-                <User className="h-5 w-5" />
-              )}
+              <span className="w-7 h-7 flex items-center justify-center rounded-full bg-vault-purple text-white font-bold mr-2">
+                {getInitials(member.profile?.full_name ?? null)}
+              </span>
               {member.profile?.full_name || "Unknown"}
             </button>
           ))}
