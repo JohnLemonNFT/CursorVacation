@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Plus, Sparkles, Trash, Star, PartyPopper, Lightbulb, Landmark, CalendarHeart, Utensils } from "lucide-react"
+import { Plus, Sparkles, Trash, Star, PartyPopper, Lightbulb, Landmark, CalendarHeart, Utensils, User } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { formatDistanceToNow } from "date-fns"
 import { Badge } from "@/components/ui/badge"
@@ -48,6 +48,14 @@ type TripWishlistProps = {
   tripId: string
   userId: string
   personFilter: string | null
+  members?: Array<{
+    user_id: string
+    profile: {
+      full_name: string | null
+      avatar_url: string | null
+    } | null
+  }>
+  setPersonFilter?: (id: string | null) => void
 }
 
 // Fun wishlist messages
@@ -59,7 +67,7 @@ const WISHLIST_MESSAGES = [
   "Wishes are the first step to amazing memories!",
 ]
 
-export function TripWishlist({ tripId, userId, personFilter }: TripWishlistProps) {
+export function TripWishlist({ tripId, userId, personFilter, members = [], setPersonFilter }: TripWishlistProps) {
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [newItemTitle, setNewItemTitle] = useState("")
@@ -350,6 +358,41 @@ export function TripWishlist({ tripId, userId, personFilter }: TripWishlistProps
 
   return (
     <div className="space-y-6 relative">
+      {/* Person filter buttons */}
+      {members.length > 0 && setPersonFilter && (
+        <div className="flex gap-2 mb-4">
+          <button
+            className={cn(
+              "flex items-center gap-2 px-3 py-1 rounded-full border text-sm font-medium transition-all",
+              !personFilter
+                ? "bg-gradient-to-r from-vault-purple to-vault-orange text-white border-vault-purple shadow"
+                : "bg-white/80 dark:bg-gray-800/80 border-vault-purple/20 text-vault-purple hover:bg-vault-purple/10"
+            )}
+            onClick={() => setPersonFilter(null)}
+          >
+            <User className="h-5 w-5" /> All
+          </button>
+          {members.map((member) => (
+            <button
+              key={member.user_id}
+              className={cn(
+                "flex items-center gap-2 px-3 py-1 rounded-full border text-sm font-medium transition-all",
+                personFilter === member.user_id
+                  ? "bg-gradient-to-r from-vault-purple to-vault-orange text-white border-vault-purple shadow"
+                  : "bg-white/80 dark:bg-gray-800/80 border-vault-purple/20 text-vault-purple hover:bg-vault-purple/10"
+              )}
+              onClick={() => setPersonFilter(member.user_id)}
+            >
+              {member.profile?.avatar_url ? (
+                <img src={member.profile.avatar_url} alt={member.profile.full_name || "User"} className="w-5 h-5 rounded-full object-cover" />
+              ) : (
+                <User className="h-5 w-5" />
+              )}
+              {member.profile?.full_name || "Unknown"}
+            </button>
+          ))}
+        </div>
+      )}
       {/* Confetti animation */}
       {showConfetti && (
         <div className="fixed inset-0 pointer-events-none z-50 flex items-center justify-center">

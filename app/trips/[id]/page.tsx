@@ -1263,7 +1263,18 @@ export default function TripDetail() {
             </>
           )}
 
-          {activeTab === "wishlist" && <TripWishlist tripId={trip.id} userId={user.id} personFilter={personFilter} />}
+          {activeTab === "wishlist" && (
+            <TripWishlist
+              tripId={trip.id}
+              userId={user.id}
+              personFilter={personFilter}
+              setPersonFilter={setPersonFilter}
+              members={members.map(m => ({
+                user_id: m.user_id,
+                profile: m.profile
+              }))}
+            />
+          )}
 
           {activeTab === "explore" && (
             <TripExplore
