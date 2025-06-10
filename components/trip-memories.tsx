@@ -274,7 +274,7 @@ export function TripMemories({ tripId, userId, startDate, endDate }: TripMemorie
 
       {/* Floating Action Button for Mobile */}
       <Button
-        className="fixed right-6 z-50 rounded-full w-14 h-14 shadow-lg bg-gradient-to-r from-vault-purple to-vault-purple/90 hover:opacity-90 transition-all duration-300 transform hover:scale-105 md:hidden bottom-[calc(72px+env(safe-area-inset-bottom))]"
+        className="fixed right-6 z-50 rounded-full w-14 h-14 shadow-lg bg-gradient-to-r from-vault-purple to-vault-purple/90 hover:opacity-90 transition-all duration-300 transform hover:scale-105 md:hidden bottom-[calc(140px+env(safe-area-inset-bottom))]"
         onClick={() => setShowAddForm(true)}
       >
         <Plus className="h-6 w-6" />

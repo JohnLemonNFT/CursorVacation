@@ -47,6 +47,7 @@ type WishlistItem = {
 type TripWishlistProps = {
   tripId: string
   userId: string
+  personFilter: string | null
 }
 
 // Fun wishlist messages
@@ -58,7 +59,7 @@ const WISHLIST_MESSAGES = [
   "Wishes are the first step to amazing memories!",
 ]
 
-export function TripWishlist({ tripId, userId }: TripWishlistProps) {
+export function TripWishlist({ tripId, userId, personFilter }: TripWishlistProps) {
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [newItemTitle, setNewItemTitle] = useState("")
@@ -339,6 +340,13 @@ export function TripWishlist({ tripId, userId }: TripWishlistProps) {
   const toggleCollapse = (cat: string) => {
     setCollapsed((prev) => ({ ...prev, [cat]: !prev[cat] }))
   }
+
+  const filteredWishlistItems = wishlistItems.filter(item => {
+    if (personFilter) {
+      return item.created_by === personFilter
+    }
+    return true
+  })
 
   return (
     <div className="space-y-6 relative">

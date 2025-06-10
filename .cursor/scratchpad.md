@@ -50,6 +50,7 @@
 - [ ] Implement per-user hiding in Explore
 - [ ] Add admin delete/edit controls
 - [ ] Test all flows and migration
+- [x] Update wishlist filtering to also filter by each person's wishlist within the existing wishlist types tab.
 
 ## Executor's Feedback or Assistance Requests
 

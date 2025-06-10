@@ -141,6 +141,7 @@ export default function TripDetail() {
   const [dataSource, setDataSource] = useState<"cache" | "network" | "unknown">("unknown")
   const [connectionStatus, setConnectionStatus] = useState<ConnectionState>({ status: "unknown", lastChecked: 0 })
   const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const [personFilter, setPersonFilter] = useState<string | null>(null)
 
   // Check online status
   useEffect(() => {
@@ -1262,7 +1263,7 @@ export default function TripDetail() {
             </>
           )}
 
-          {activeTab === "wishlist" && <TripWishlist tripId={trip.id} userId={user.id} />}
+          {activeTab === "wishlist" && <TripWishlist tripId={trip.id} userId={user.id} personFilter={personFilter} />}
 
           {activeTab === "explore" && (
             <TripExplore
