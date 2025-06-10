@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { X, Download, Share, Plus, Smartphone } from "lucide-react"
+import { X, Download, Share, Plus } from "lucide-react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import Image from "next/image"
 
 type Platform = "ios" | "android" | "desktop" | "unknown"
 
@@ -137,8 +138,8 @@ export function PWAInstallPrompt() {
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-vault-purple to-vault-pink flex items-center justify-center text-white">
-                  <Smartphone className="h-6 w-6" />
+                <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center">
+                  <Image src="/icon-512x512.png" alt="VDH Vault App Icon" width={48} height={48} className="rounded-xl" />
                 </div>
                 <div>
                   <CardTitle className="text-lg">Add to Home Screen</CardTitle>
