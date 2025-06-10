@@ -335,8 +335,13 @@ export function TripWishlist({ tripId, userId, personFilter, members = [], setPe
     }, 5000)
   }
 
-  // Group wishlistItems by category
-  const grouped = wishlistItems.reduce((acc, item) => {
+  // Group filteredWishlistItems by category
+  const grouped = wishlistItems.filter(item => {
+    if (personFilter) {
+      return item.created_by === personFilter
+    }
+    return true
+  }).reduce((acc, item) => {
     const cat = item.category || 'Other'
     if (!acc[cat]) acc[cat] = []
     acc[cat].push(item)
@@ -348,13 +353,6 @@ export function TripWishlist({ tripId, userId, personFilter, members = [], setPe
   const toggleCollapse = (cat: string) => {
     setCollapsed((prev) => ({ ...prev, [cat]: !prev[cat] }))
   }
-
-  const filteredWishlistItems = wishlistItems.filter(item => {
-    if (personFilter) {
-      return item.created_by === personFilter
-    }
-    return true
-  })
 
   function getInitials(name: string | null) {
     if (!name) return "?"
