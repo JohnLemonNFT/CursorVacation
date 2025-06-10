@@ -425,7 +425,7 @@ export default function TripDetail() {
         await navigator.share({
           title: `Join my trip: ${trip.name}`,
           text: `I've invited you to join my trip on VDH Vault. Use invite code: ${trip.invite_code}`,
-          url: window.location.href,
+          url: "https://cursor-vacation.vercel.app",
         })
       } catch (error) {
         console.error("Error sharing:", error)
